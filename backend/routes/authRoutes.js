@@ -2,16 +2,18 @@ const express=require("express");
 const router=express.Router();
 const User=require("../models/User");
 const Company=require("../models/Company");
-const bcrypt=require("bycrpt.js");
+const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken");
 
 router.post("/register",async(req,res)=>{
     try{
         const{email,name,password,role,companyId}=req.body;
+        const count = await User.countDocuments();
+        const userId = count + 1;
         const hashedPassword=await bcrypt.hash(password,10);
 
         const user=new User({
-            name,email,password:hashedPassword,role,companyId
+            name,email,password:hashedPassword,role,companyId,userId
         });
 
         await user.save();

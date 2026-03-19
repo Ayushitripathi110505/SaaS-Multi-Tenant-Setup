@@ -1,6 +1,6 @@
 const express=require("express");
 const router=express.Router();
-const User=require("../models/Uesr");
+const User=require("../models/User");
 const Project=require("../models/Project");
 
 const {VerifyJWT, verifyJWT}=require("../middleware/authMiddleware");

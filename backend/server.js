@@ -10,12 +10,15 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 const app = express();
 connectDB();
 
+app.get("/", (req, res) => {
+  res.send("API is running 🚀");
+});
 app.use(express.json());
 
-app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
-app.use("/project", projectRoutes);
-app.use("/analytics", analyticsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/project", projectRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log("Server running");
