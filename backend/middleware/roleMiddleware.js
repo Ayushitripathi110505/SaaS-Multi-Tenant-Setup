@@ -1,22 +1,15 @@
-function isUser(req,res,next){
-    if(req.user.role!="Employee"){
-        return res.status(403).send("access denied:Employees Only");
+function roleMiddleware(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
     next();
+  };
 }
 
-function isAdmin(req,res,next){
-    if(req.user.role!=="Admin"){
-        return res.status(403).send("access denied:Admins Only");
-    }
-    next();
-}
-
-function isManager(req,res,next){
-    if(req.user.role!=="Manager"){
-         return res.status(403).send("access denied:Managers only");
-    }
-    next();
-}
-
-module.exports={isManager,isAdmin,isUser};
+module.exports = roleMiddleware;

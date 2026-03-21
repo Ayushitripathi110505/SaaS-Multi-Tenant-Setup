@@ -1,36 +1,66 @@
-const express=require("express");
-const router=express.Router();
-const Project=require("../models/Project");
+const express = require("express");
+const router = express.Router();
 
-const { verifyJWT }=require("../middleware/authMiddleware");
+const Project = require("../models/Project");
+const { verifyJWT } = require("../middleware/authMiddleware");
+const { isAdmin, isManager } = require("../middleware/roleMiddleware");
 
-//create task
-router.post("/",verifyJWT,async(req,res)=>{
-    const project=new Project({
-        ...req.body,
-        companyId:req.user.companyId
+
+// ✅ Create Project (Admin / Manager)
+router.post("/", verifyJWT, async (req, res) => {
+  try {
+    const project = await Project.create({
+      name: req.body.name,
+      description: req.body.description,
+      companyId: req.user.companyId,
+      createdBy: req.user._id
     });
-    await Project.save();
+
     res.json(project);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-//get all task
 
-router.get("/",verifyJWT,async(req,res)=>{
-    const tasks=await Project.find({
-        companyId:req.user.companyId
-    }).populate("assignedTo");
-    res.json(tasks);
+// ✅ Get All Projects (Company-wise)
+router.get("/", verifyJWT, async (req, res) => {
+  try {
+    const projects = await Project.find({
+      companyId: req.user.companyId
+    });
+
+    res.json(projects);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-//update tasks
-router.put("/:id",verifyJWT,async(req,res)=>{
-    const updated=await Project.findByIdAndDelete(
-        req.params.id,
-        req.body,
-        {new:true}
+
+// ✅ Update Project
+router.put("/:id", verifyJWT, async (req, res) => {
+  try {
+    const project = await Project.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
     );
-    res.json(updated);
+
+    res.json(project);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-module.exports=router;
+
+// ✅ Delete Project
+router.delete("/:id", verifyJWT, async (req, res) => {
+  try {
+    await Project.findByIdAndDelete(req.params.id);
+    res.json({ message: "Project deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
