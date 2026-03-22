@@ -1,30 +1,84 @@
 import React, { useEffect, useState } from "react";
 import API from "../api/api";
-import { useNavigate } from "react-router-dom";
+
 function Tasks() {
   const [tasks, setTasks] = useState([]);
-  const navigate = useNavigate();
- useEffect(() => {
-  API.get("/tasks")
-    .then(res => setTasks(res.data))
-    .catch(err => {
+  const [filter, setFilter] = useState("All");
+
+  const fetchTasks = async () => {
+    try {
+      const res = await API.get("/tasks");
+      setTasks(res.data);
+    } catch (err) {
+      console.log(err.response?.data);
+
       if (err.response?.status === 401) {
         localStorage.clear();
-        navigate("/login");
+        window.location.href = "/login";
       }
-    });
-}, [navigate]); // ✅ FIX
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  // 🔄 Update Status
+  const updateStatus = async (id, status) => {
+    try {
+      await API.put(`/tasks/${id}`, { status });
+      fetchTasks();
+    } catch (err) {
+      console.log(err.response?.data);
+    }
+  };
+
+  // 🎯 Filter tasks
+  const filteredTasks =
+    filter === "All"
+      ? tasks
+      : tasks.filter((t) => t.status === filter);
 
   return (
     <div>
-      <h2>Tasks</h2>
+      <h2>📋 Tasks</h2>
 
-      {tasks.map(t => (
-        <div key={t._id}>
+      {/* Filter */}
+      <select onChange={(e) => setFilter(e.target.value)}>
+        <option value="All">All</option>
+        <option value="Todo">Todo</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Done">Done</option>
+      </select>
+
+      <hr />
+
+      {filteredTasks.map((t) => (
+        <div
+          key={t._id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            marginBottom: "10px"
+          }}
+        >
           <h3>{t.title}</h3>
-          <p>{t.status}</p>
+          <p>{t.description}</p>
+
           <p>Project: {t.projectId?.name}</p>
-          <p>Assigned: {t.assignedTo?.name}</p>
+          <p>Assigned: {t.assignedTo?.name || "None"}</p>
+
+          {/* Status Change */}
+          <select
+            value={t.status}
+            onChange={(e) =>
+              updateStatus(t._id, e.target.value)
+            }
+          >
+            <option value="Todo">Todo</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
         </div>
       ))}
     </div>
