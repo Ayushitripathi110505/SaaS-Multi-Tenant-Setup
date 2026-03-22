@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import API from "../api/api";
-
+import { useNavigate } from "react-router-dom";
 function Tasks() {
   const [tasks, setTasks] = useState([]);
-
-  useEffect(() => {
-    API.get("/tasks").then(res => setTasks(res.data));
-  }, []);
+  const navigate = useNavigate();
+ useEffect(() => {
+  API.get("/tasks")
+    .then(res => setTasks(res.data))
+    .catch(err => {
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        navigate("/login");
+      }
+    });
+}, [navigate]); // ✅ FIX
 
   return (
     <div>

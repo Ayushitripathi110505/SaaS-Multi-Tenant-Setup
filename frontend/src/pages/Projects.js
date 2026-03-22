@@ -6,9 +6,19 @@ function Projects() {
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    API.get("/projects").then(res => setProjects(res.data));
-  }, []);
+   useEffect(() => {
+  API.get("/projects")
+    .then(res => setProjects(res.data))
+    .catch(err => {
+      console.log(err.response?.data);
+
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        navigate("/login");
+      }
+    });
+}, [navigate]); // ✅ FIX
+
 
   return (
     <div>

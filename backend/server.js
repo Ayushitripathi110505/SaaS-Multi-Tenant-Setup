@@ -20,7 +20,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/project", projectRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/tasks", taskRoutes);
 
