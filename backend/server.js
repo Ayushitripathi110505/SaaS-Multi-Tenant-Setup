@@ -5,7 +5,7 @@ const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-const projectRoutes = require("./routes/projects");
+const projectRoutes = require("./routes/projectRoutes");
 const taskRoutes = require("./routes/tasksRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 

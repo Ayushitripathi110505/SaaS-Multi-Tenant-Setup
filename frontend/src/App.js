@@ -9,7 +9,8 @@ import ManagerPanel from "./pages/ManagerPanel";
 
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
-
+import ProjectDetails from "./pages/ProjectDetails";
+import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
 
@@ -32,7 +33,8 @@ function App() {
       <Routes>
 
         {/* Public */}
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* Protected Dashboard */}
         <Route
@@ -43,7 +45,17 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute>
+            <Layout>
+            <ProjectDetails />
+            </Layout>
+            </ProtectedRoute>
+          }
+        />
         {/* Projects (All authenticated users) */}
         <Route
           path="/projects"
