@@ -4,13 +4,22 @@ import API from "../api/api";
 function Users() {
   const [users, setUsers] = useState([]);
 
-  // Fetch users
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "Employee",
+  });
+
+  // =========================
+  // Fetch Users
+  // =========================
   const fetchUsers = async () => {
     try {
       const res = await API.get("/users");
       setUsers(res.data);
     } catch (err) {
-      console.error(err.response?.data || err.message);
+      console.log(err.response?.data || err.message);
     }
   };
 
@@ -18,42 +27,142 @@ function Users() {
     fetchUsers();
   }, []);
 
-  // Delete user
-  const handleDelete = async (id) => {
+  // =========================
+  // Handle Input
+  // =========================
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // =========================
+  // Create User
+  // =========================
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+
     try {
-      await API.delete(`/users/${id}`);
-      fetchUsers(); // refresh
+      await API.post("/users", form);
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        role: "Employee",
+      });
+      fetchUsers();
     } catch (err) {
-      console.error(err.response?.data || err.message);
+      console.log(err.response?.data || err.message);
+    }
+  };
+
+  // =========================
+  // Update Role
+  // =========================
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await API.put(`/users/${userId}/role`, { role: newRole });
+      fetchUsers();
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+    }
+  };
+
+  // =========================
+  // Delete User
+  // =========================
+  const handleDelete = async (userId) => {
+    try {
+      await API.delete(`/users/${userId}`);
+      fetchUsers();
+    } catch (err) {
+      console.log(err.response?.data || err.message);
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>👥 Users (Admin)</h2>
+    <div>
+      <h2>👥 Users Management</h2>
 
-      {users.length === 0 ? (
-        <p>No users found</p>
-      ) : (
-        users.map((u) => (
-          <div
-            key={u._id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-            }}
+      {/* ================= CREATE USER ================= */}
+      <h3>Create User</h3>
+
+      <form onSubmit={handleCreateUser}>
+        <input
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <br />
+
+        <input
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <br />
+
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+        <br />
+
+        <select name="role" value={form.role} onChange={handleChange}>
+          <option value="Employee">Employee</option>
+          <option value="Manager">Manager</option>
+          <option value="Admin">Admin</option>
+        </select>
+        <br />
+
+        <button type="submit">Create</button>
+      </form>
+
+      <hr />
+
+      {/* ================= USERS LIST ================= */}
+      <h3>All Users</h3>
+
+      {users.map((u) => (
+        <div
+          key={u._id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          <p><strong>{u.name}</strong></p>
+          <p>{u.email}</p>
+
+          <p>Role: {u.role}</p>
+
+          {/* Change Role */}
+          <select
+            value={u.role}
+            onChange={(e) =>
+              handleRoleChange(u._id, e.target.value)
+            }
           >
-            <p><strong>Name:</strong> {u.name}</p>
-            <p><strong>Email:</strong> {u.email}</p>
-            <p><strong>Role:</strong> {u.role}</p>
+            <option value="Employee">Employee</option>
+            <option value="Manager">Manager</option>
+            <option value="Admin">Admin</option>
+          </select>
 
-            <button onClick={() => handleDelete(u._id)}>
-              Delete
-            </button>
-          </div>
-        ))
-      )}
+          <br /><br />
+
+          {/* Delete */}
+          <button onClick={() => handleDelete(u._id)}>
+            Delete ❌
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
