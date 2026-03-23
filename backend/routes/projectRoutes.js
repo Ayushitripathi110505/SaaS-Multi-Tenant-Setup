@@ -23,9 +23,10 @@ router.post(
 
       const project = await Project.create({
         name,
-        description,
-        companyId: req.user.companyId,
-        createdBy: req.user._id
+      description,
+      assignedTo, // 🔥 link user
+      createdBy: req.user._id,
+      companyId: req.user.companyId,
       });
 
       res.json(project);
@@ -46,7 +47,8 @@ router.get(
     try {
       const projects = await Project.find({
         companyId: req.user.companyId
-      }).populate("createdBy", "name email");
+      }).populate("assignedTo", "name email") 
+      .populate("createdBy", "name");
 
       res.json(projects);
     } catch (err) {

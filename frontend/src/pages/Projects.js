@@ -101,7 +101,9 @@ function Projects() {
           </h3>
 
           <p>{p.description}</p>
-
+           <p>
+              Assigned To: {p.assignedTo?.name || "Not Assigned"}
+           </p>
           <button onClick={() => handleDelete(p._id)}>
             Delete
           </button>

@@ -22,7 +22,7 @@ function ProjectDetails() {
     try {
       const projectRes = await API.get(`/projects/${id}`);
       const tasksRes = await API.get(`/tasks/project/${id}`);
-      const usersRes = await API.get(`/users/list`);
+      const usersRes = await API.get(`/users`); // ✅ FIXED
 
       setProject(projectRes.data);
       setTasks(tasksRes.data);
@@ -51,8 +51,10 @@ function ProjectDetails() {
 
     try {
       await API.post("/tasks", {
-        ...form,
-        projectId: id,
+        title: form.title,
+        description: form.description,
+        assignedTo: form.assignedTo,
+        projectId: id, // ✅ correct
         status: "Todo",
       });
 
@@ -115,9 +117,9 @@ function ProjectDetails() {
           required
         >
           <option value="">Select User</option>
-          {users.map((user) => (
-            <option key={user._id} value={user._id}>
-              {user.name} ({user.role})
+          {users.map((u) => (
+            <option key={u._id} value={u._id}>
+              {u.name} ({u.role})
             </option>
           ))}
         </select>
@@ -147,8 +149,7 @@ function ProjectDetails() {
           <p>{task.description}</p>
 
           <p>
-            Assigned To:{" "}
-            {task.assignedTo?.name || "Unassigned"}
+            Assigned To: {task.assignedTo?.name || "Unassigned"}
           </p>
 
           <p>Status: {task.status}</p>
