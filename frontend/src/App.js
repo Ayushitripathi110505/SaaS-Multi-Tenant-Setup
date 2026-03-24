@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./styles/tailwind.css";
-
+import Start from "./pages/FirstPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
@@ -14,6 +14,7 @@ import Users from "./pages/Users";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
+import CreateCompany from "./pages/CreateCompany";
 
 // 🔐 Role-based wrapper
 function RoleRoute({ children, role }) {
@@ -34,12 +35,12 @@ function App() {
       <Routes>
 
         {/* Default */}
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Start />} />
 
         {/* Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
+        <Route path="/create-company" element={<CreateCompany />} />
         {/* Dashboard */}
         <Route
           path="/dashboard"

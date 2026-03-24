@@ -50,6 +50,11 @@ function Login() {
           value={form.password}
           onChange={handleChange}
         />
+        <input
+        name="companyCode"
+        placeholder="Company Code"
+        onChange={handleChange}
+        />
 
         <button type="submit">Login</button>
 

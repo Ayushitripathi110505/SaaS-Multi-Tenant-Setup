@@ -61,7 +61,50 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+//-------------------------------------------------
+//----------------create company-------------------
+//-------------------------------------------------
+router.post("/create-company", async (req, res) => {
+  try {
+    const { companyName, companyPlan, name, email, password, adminKey } = req.body;
 
+    // 🔐 check admin key
+    if (adminKey !==process.env.ADMIN_SECRET_KEY ) {
+      return res.status(403).json({ error: "Invalid admin key" });
+    }
+
+    // 🔹 generate company code
+    const companyCode = companyName.slice(0, 3).toUpperCase() + Math.floor(Math.random() * 1000);
+
+    // 🔹 create company
+    const company = await Company.create({
+      companyName,
+      companyPlan,
+      companyCode
+    });
+
+    // 🔹 hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🔹 create admin user
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "Admin",
+      companyId: company._id
+    });
+
+    res.json({
+      message: "Company created successfully",
+      companyCode,  // 🔥 VERY IMPORTANT
+      user
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post("/login", async (req, res) => {
   try {
