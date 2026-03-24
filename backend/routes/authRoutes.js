@@ -34,10 +34,6 @@ router.post("/register", async (req, res) => {
       }
     }
 
-    // 🔢 userId generation (your logic)
-    const count = await User.countDocuments();
-    const userId = count + 1;
-
     // 🔐 hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -46,8 +42,7 @@ router.post("/register", async (req, res) => {
       email,
       password: hashedPassword,
       role: role || "Employee", // ✅ role from frontend
-      companyId,
-      userId,
+      companyId:company._id,
     });
 
     await user.save();

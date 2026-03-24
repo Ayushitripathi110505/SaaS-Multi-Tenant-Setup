@@ -7,21 +7,13 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
 
-  userId: {
-    type: Number,
-    unique: true
-  },
-
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
     required: true,
     index: true
   },
-  companyCode:{
-    type:String,
-    required:true
-  },
+ 
 
   email: {
     type: String,
