@@ -10,7 +10,11 @@ const companySchema=new mongoose.Schema({
     required:true,
     enum:["Premium","Basic","Standard"],
     default:"Basic"
+  },
+  companyCode:{
+    type:String,
+    required:true
   }
 }, { timestamps: true });
 
-mongoose.exports=mongoose.model("Company",companySchema);
+module.exports=mongoose.model("Company",companySchema);

@@ -42,6 +42,7 @@ router.post(
       if (existingUser) {
         return res.status(400).json({ error: "User already exists" });
       }
+    
 
       // hash password
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -51,7 +52,8 @@ router.post(
         email,
         password: hashedPassword,
         role,
-        companyId: req.user.companyId, // 🔥 enforce same company
+        companyId: req.user.companyId,
+         // 🔥 enforce same company
       });
 
       res.json(user);

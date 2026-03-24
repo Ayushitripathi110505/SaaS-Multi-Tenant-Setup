@@ -10,12 +10,19 @@ const jwt=require("jsonwebtoken");
 // ===============================
 router.post("/register", async (req, res) => {
   try {
-    const { email, name, password, role, companyId, adminKey } = req.body;
-
+    const { email, name, password, role, companyId, adminKey,companyCode } = req.body;
+    if (!companyCode) {
+      return res.status(400).json({ error: "Company code is required" });
+    }
     // ✅ Check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
+    }
+    const company = await Company.findOne({ companyCode });
+
+    if (!company) {
+      return res.status(400).json({ error: "Invalid company code" });
     }
 
     // 🔐 Admin protection

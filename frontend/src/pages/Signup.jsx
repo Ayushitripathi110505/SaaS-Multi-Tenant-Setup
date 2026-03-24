@@ -10,8 +10,9 @@ function Signup() {
     email: "",
     password: "",
     role: "Employee",
-    companyId: "",
+    
     adminKey: "",
+    companyCode:""
   });
 
   const handleChange = (e) => {
@@ -45,7 +46,7 @@ function Signup() {
         <input type="password" name="password" placeholder="Password" onChange={handleChange} />
         <br />
 
-        <input name="companyId" placeholder="Company ID" onChange={handleChange} />
+        <input type="text" name="companyCode" value={form.companyCode} placeholder="Company Code" onChange={handleChange} />
         <br />
 
         {/* Role Selection */}

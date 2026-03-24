@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  companyCode:{
+    type:String,
+    required:true
+  },
 
   email: {
     type: String,
