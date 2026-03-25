@@ -19,12 +19,12 @@ router.post(
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const { name, description } = req.body;
+      const { name, description, assignedTo } = req.body;
 
       const project = await Project.create({
         name,
       description,
-      assignedTo, // 🔥 link user
+      assignedTo: assignedTo || null, // 🔥 link user
       createdBy: req.user._id,
       companyId: req.user.companyId,
       });

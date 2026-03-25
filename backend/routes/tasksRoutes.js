@@ -5,32 +5,45 @@ const Task = require("../models/Task");
 const { verifyJWT } = require("../middleware/authMiddleware");
 
 
-// ✅ Create Task
+// ===============================
+// ✅ CREATE TASK
+// ===============================
 router.post("/", verifyJWT, async (req, res) => {
   try {
-    const { title, description, assignedTo, projectId } = req.body;
+    const { title, description, assignedTo, projectId, status } = req.body;
+
+    // ✅ VALIDATION (NEW)
+    if (!title || !projectId) {
+      return res.status(400).json({
+        message: "Title and ProjectId are required"
+      });
+    }
 
     const task = await Task.create({
       title,
       description,
       assignedTo,
       projectId,
+      status: status || "Pending", // ✅ DEFAULT STATUS FIX
       createdBy: req.user._id,
       companyId: req.user.companyId
     });
 
-    res.json(task);
+    res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 
-// ✅ Get Tasks (Company + Role-based)
+// ===============================
+// ✅ GET TASKS (COMPANY + ROLE BASED)
+// ===============================
 router.get("/", verifyJWT, async (req, res) => {
   try {
     let filter = { companyId: req.user.companyId };
 
+    // ✅ ROLE BASED FILTER (unchanged but correct)
     if (req.user.role === "Employee") {
       filter.assignedTo = req.user._id;
     }
@@ -46,7 +59,9 @@ router.get("/", verifyJWT, async (req, res) => {
 });
 
 
-// ✅ Get Tasks by Project
+// ===============================
+// ✅ GET TASKS BY PROJECT
+// ===============================
 router.get("/project/:projectId", verifyJWT, async (req, res) => {
   try {
     const tasks = await Task.find({
@@ -61,14 +76,23 @@ router.get("/project/:projectId", verifyJWT, async (req, res) => {
 });
 
 
-// ✅ Update Task
+// ===============================
+// ✅ UPDATE TASK (SECURED FIX)
+// ===============================
 router.put("/:id", verifyJWT, async (req, res) => {
   try {
-    const task = await Task.findByIdAndUpdate(
-      req.params.id,
+    const task = await Task.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        companyId: req.user.companyId // ✅ SECURITY FIX (multi-tenant)
+      },
       req.body,
       { new: true }
     );
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
 
     res.json(task);
   } catch (err) {
@@ -77,10 +101,20 @@ router.put("/:id", verifyJWT, async (req, res) => {
 });
 
 
-// ✅ Delete Task
+// ===============================
+// ✅ DELETE TASK (SECURED FIX)
+// ===============================
 router.delete("/:id", verifyJWT, async (req, res) => {
   try {
-    await Task.findByIdAndDelete(req.params.id);
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      companyId: req.user.companyId // ✅ SECURITY FIX
+    });
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
     res.json({ message: "Task deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });

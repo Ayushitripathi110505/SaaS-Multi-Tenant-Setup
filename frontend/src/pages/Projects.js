@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 
 function Projects() {
   const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
   const [form, setForm] = useState({
     name: "",
-    description: ""
+    description: "",
+    assignedTo: ""
   });
 
   const navigate = useNavigate();
@@ -28,6 +30,12 @@ function Projects() {
 
   useEffect(() => {
     fetchProjects();
+     const fetchUsers = async () => {
+    const res = await API.get("/users");
+    setUsers(res.data);
+  };
+
+  fetchUsers();
   }, []);
 
   // ✍️ Handle Input
@@ -41,7 +49,7 @@ function Projects() {
 
     try {
       await API.post("/projects", form);
-      setForm({ name: "", description: "" });
+      setForm({ name: "", description: "" ,assignedTo: ""});
       fetchProjects();
     } catch (err) {
       console.log(err.response?.data);
@@ -80,6 +88,18 @@ function Projects() {
           onChange={handleChange}
         />
         <br />
+        <select
+          name="assignedTo"
+          value={form.assignedTo}
+          onChange={handleChange}
+        >
+          <option value="">Assign User</option>
+          {users.map((u) => (
+            <option key={u._id} value={u._id}>
+              {u.name}
+            </option>
+          ))}
+        </select>
 
         <button type="submit">Create Project</button>
       </form>

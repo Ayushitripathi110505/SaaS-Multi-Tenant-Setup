@@ -55,7 +55,7 @@ function ProjectDetails() {
         description: form.description,
         assignedTo: form.assignedTo,
         projectId: id, // ✅ correct
-        status: "Todo",
+        status: "Pending",
       });
 
       setForm({ title: "", description: "", assignedTo: "" });
