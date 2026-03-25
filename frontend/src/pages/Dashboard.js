@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import API from "../api/api";
-
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 function Dashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -14,7 +14,15 @@ function Dashboard() {
     inProgress: 0,
     completed: 0,
   });
+  // ✅ Chart Data (based on your stats)
+const chartData = [
+  { name: "Pending", value: stats.pending },
+  { name: "In Progress", value: stats.inProgress },
+  { name: "Completed", value: stats.completed },
+];
 
+// ✅ Colors for each status
+const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
   const [loading, setLoading] = useState(true);
 
   // 🔄 Fetch dashboard data
@@ -103,6 +111,26 @@ function Dashboard() {
           {completionRate}%
         </div>
       </div>
+
+      {/* ✅ NEW: Pie Chart */}
+<h3>Task Distribution</h3>
+
+       <PieChart width={300} height={300}>
+        <Pie
+          data={chartData}
+          cx="50%"
+          cy="50%"
+          outerRadius={100}
+          dataKey="value"
+          label
+        >
+            {chartData.map((entry, index) => (
+              <Cell key={index} fill={COLORS[index]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
 
       {/* 👤 Profile */}
       <div style={styles.card}>
