@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import API from "../api/api";
 
+
 function Dashboard() {
   const { user, logout } = useContext(AuthContext);
 
@@ -9,6 +10,9 @@ function Dashboard() {
     projects: 0,
     tasks: 0,
     users: 0,
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
   });
 
   const [loading, setLoading] = useState(true);
@@ -28,6 +32,11 @@ function Dashboard() {
 
     fetchStats();
   }, []);
+    // ✅ NEW: Safe calculation to avoid division by zero
+  const completionRate =
+    stats.tasks > 0
+      ? Math.round((stats.completed / stats.tasks) * 100)
+      : 0;
 
   const styles = {
     container: {
@@ -74,6 +83,27 @@ function Dashboard() {
         Welcome, {user.name} 👋
       </h1>
 
+        {/* ✅ NEW: Completion Stats */}
+      <h2>Task Progress</h2>
+      <p>
+        {stats.completed} / {stats.tasks} Tasks Completed ({completionRate}%)
+      </p>
+
+      {/* ✅ NEW: Progress Bar */}
+      <div style={{ width: "100%", background: "#eee", borderRadius: "10px", marginBottom: "20px" }}>
+        <div
+          style={{
+            width: `${completionRate}%`,
+            background: "green",
+            color: "white",
+            padding: "5px",
+            borderRadius: "10px",
+          }}
+        >
+          {completionRate}%
+        </div>
+      </div>
+
       {/* 👤 Profile */}
       <div style={styles.card}>
         <h3>Profile</h3>
@@ -109,6 +139,21 @@ function Dashboard() {
                   <h2>{stats.users}</h2>
                   <p>Users</p>
                 </div>
+                 {/* ✅ NEW: Task Breakdown */}
+                <div style={{ ...styles.stat, background: "#ffccc7" }}>
+                  <h2>{stats.pending}</h2>
+                  <p>Pending</p>
+                </div>
+
+                <div style={{ ...styles.stat, background: "#ffe58f" }}>
+                  <h2>{stats.inProgress}</h2>
+                  <p>In Progress</p>
+                </div>
+
+                <div style={{ ...styles.stat, background: "#b7eb8f" }}>
+                  <h2>{stats.completed}</h2>
+                  <p>Completed</p>
+                </div>
               </>
             )}
           </div>
@@ -134,6 +179,21 @@ function Dashboard() {
                   <h2>{stats.tasks}</h2>
                   <p>Tasks</p>
                 </div>
+                    {/* ✅ NEW: Manager Task Breakdown */}
+                <div style={{ ...styles.stat, background: "#ffccc7" }}>
+                  <h2>{stats.pending}</h2>
+                  <p>Pending</p>
+                </div>
+
+                <div style={{ ...styles.stat, background: "#ffe58f" }}>
+                  <h2>{stats.inProgress}</h2>
+                  <p>In Progress</p>
+                </div>
+
+                <div style={{ ...styles.stat, background: "#b7eb8f" }}>
+                  <h2>{stats.completed}</h2>
+                  <p>Completed</p>
+                </div>
               </>
             )}
           </div>
@@ -155,6 +215,21 @@ function Dashboard() {
               </div>
             )}
           </div>
+              {/* ✅ NEW: Employee Task Breakdown */}
+                <div style={{ ...styles.stat, background: "#ffccc7" }}>
+                  <h2>{stats.pending}</h2>
+                  <p>Pending</p>
+                </div>
+
+                <div style={{ ...styles.stat, background: "#ffe58f" }}>
+                  <h2>{stats.inProgress}</h2>
+                  <p>In Progress</p>
+                </div>
+
+                <div style={{ ...styles.stat, background: "#b7eb8f" }}>
+                  <h2>{stats.completed}</h2>
+                  <p>Completed</p>
+                </div>
         </>
       )}
 
