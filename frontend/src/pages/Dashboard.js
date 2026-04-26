@@ -14,18 +14,76 @@ function Dashboard() {
     inProgress: 0,
     completed: 0,
   });
-  // ✅ Chart Data (based on your stats)
-const chartData = [
-  { name: "Pending", value: stats.pending },
-  { name: "In Progress", value: stats.inProgress },
-  { name: "Completed", value: stats.completed },
-];
 
-// ✅ Colors for each status
-const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
+  const [tasks, setTasks] = useState([]);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Fetch dashboard data
+  // ================= STYLES =================
+  const styles = {
+    container: {
+      padding: "30px",
+      fontFamily: "Arial",
+    },
+    card: {
+      padding: "20px",
+      borderRadius: "10px",
+      background: "#f5f5f5",
+      marginBottom: "20px",
+    },
+    taskCard: {
+      border: "1px solid #ddd",
+      padding: "10px",
+      borderRadius: "8px",
+      marginBottom: "10px",
+      background: "#fafafa",
+    },
+    input: {
+      padding: "8px",
+      marginRight: "10px",
+    },
+    select: {
+      padding: "8px",
+    },
+  };
+
+  // ================= CHART =================
+  const chartData = [
+    { name: "Pending", value: stats.pending },
+    { name: "In Progress", value: stats.inProgress },
+    { name: "Completed", value: stats.completed },
+  ];
+
+  const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
+
+  // ================= FETCH TASKS =================
+  const fetchTasks = async () => {
+    try {
+      let query = [];
+
+      if (status) query.push(`status=${status}`);
+      if (search) query.push(`search=${search}`);
+
+      const url = `/tasks?${query.join("&")}`;
+
+      const res = await API.get(url);
+      setTasks(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ✅ Debounce
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      fetchTasks();
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [search, status]);
+
+  // ================= FETCH STATS =================
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -40,65 +98,28 @@ const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
 
     fetchStats();
   }, []);
-    // ✅ NEW: Safe calculation to avoid division by zero
+
+  // ================= CALC =================
   const completionRate =
     stats.tasks > 0
       ? Math.round((stats.completed / stats.tasks) * 100)
       : 0;
 
-  const styles = {
-    container: {
-      padding: "30px",
-      fontFamily: "Arial",
-    },
-    card: {
-      padding: "20px",
-      borderRadius: "10px",
-      background: "#f5f5f5",
-      marginBottom: "20px",
-    },
-    title: {
-      fontSize: "24px",
-      marginBottom: "10px",
-    },
-    statBox: {
-      display: "flex",
-      gap: "20px",
-      flexWrap: "wrap",
-    },
-    stat: {
-      flex: 1,
-      minWidth: "150px",
-      padding: "20px",
-      background: "#e3e3e3",
-      borderRadius: "10px",
-      textAlign: "center",
-    },
-    logoutBtn: {
-      marginTop: "10px",
-      padding: "8px 12px",
-      cursor: "pointer",
-    },
-  };
-
   if (!user) return <p>Loading...</p>;
 
   return (
     <div style={styles.container}>
-      
-      {/* 👋 Welcome */}
-      <h1 style={styles.title}>
-        Welcome, {user.name} 👋
-      </h1>
 
-        {/* ✅ NEW: Completion Stats */}
+      {/* 👋 Welcome */}
+      <h1>Welcome, {user.name} 👋</h1>
+
+      {/* ================= PROGRESS ================= */}
       <h2>Task Progress</h2>
       <p>
         {stats.completed} / {stats.tasks} Tasks Completed ({completionRate}%)
       </p>
 
-      {/* ✅ NEW: Progress Bar */}
-      <div style={{ width: "100%", background: "#eee", borderRadius: "10px", marginBottom: "20px" }}>
+      <div style={{ width: "100%", background: "#eee", borderRadius: "10px" }}>
         <div
           style={{
             width: `${completionRate}%`,
@@ -112,10 +133,51 @@ const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
         </div>
       </div>
 
-      {/* ✅ NEW: Pie Chart */}
-<h3>Task Distribution</h3>
+      {/* ================= TASK SECTION ================= */}
+      <div style={{ marginTop: "20px" }}>
+        <h2>Tasks</h2>
 
-       <PieChart width={300} height={300}>
+        {/* 🔍 Search + Filter */}
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            style={styles.input}
+            placeholder="Search tasks..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            style={styles.select}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="inProgress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <h4>Total Tasks Found: {tasks.length}</h4>
+
+        {/* 📋 Task List */}
+        {tasks.length === 0 ? (
+          <p>No tasks found</p>
+        ) : (
+          tasks.map((task) => (
+            <div key={task._id} style={styles.taskCard}>
+              <h3>{task.title}</h3>
+              <p>
+                Status: <strong>{task.status}</strong>
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ================= CHART ================= */}
+      <h3>Task Distribution</h3>
+      <PieChart width={300} height={300}>
         <Pie
           data={chartData}
           cx="50%"
@@ -124,180 +186,54 @@ const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
           dataKey="value"
           label
         >
-            {chartData.map((entry, index) => (
-              <Cell key={index} fill={COLORS[index]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+          {chartData.map((entry, index) => (
+            <Cell key={index} fill={COLORS[index]} />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
 
-      {/* 👤 Profile */}
+      {/* ================= PROFILE ================= */}
       <div style={styles.card}>
         <h3>Profile</h3>
-        <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>Role:</strong> {user.role}</p>
-
-        <button style={styles.logoutBtn} onClick={logout}>
-          Logout
-        </button>
+        <p>Email: {user.email}</p>
+        <p>Role: {user.role}</p>
+        <button onClick={logout}>Logout</button>
       </div>
 
-      {/* ================= ADMIN ================= */}
+      {/* ================= ROLE DASHBOARDS ================= */}
       {user.role === "Admin" && (
-        <>
+        <div>
           <h3>🛠 Admin Dashboard</h3>
-
-          <div style={styles.statBox}>
-            {loading ? (
-              <p>Loading stats...</p>
-            ) : (
-              <>
-                <div style={styles.stat}>
-                  <h2>{stats.projects}</h2>
-                  <p>Projects</p>
-                </div>
-
-                <div style={styles.stat}>
-                  <h2>{stats.tasks}</h2>
-                  <p>Tasks</p>
-                </div>
-
-                <div style={styles.stat}>
-                  <h2>{stats.users}</h2>
-                  <p>Users</p>
-                </div>
-                 {/* ✅ NEW: Task Breakdown */}
-                <div style={{ ...styles.stat, background: "#ffccc7" }}>
-                  <h2>{stats.pending}</h2>
-                  <p>Pending</p>
-                </div>
-
-                <div style={{ ...styles.stat, background: "#ffe58f" }}>
-                  <h2>{stats.inProgress}</h2>
-                  <p>In Progress</p>
-                </div>
-
-                <div style={{ ...styles.stat, background: "#b7eb8f" }}>
-                  <h2>{stats.completed}</h2>
-                  <p>Completed</p>
-                </div>
-              </>
-            )}
-          </div>
-        </>
+          {!loading && (
+            <>
+              <p>Projects: {stats.projects}</p>
+              <p>Tasks: {stats.tasks}</p>
+              <p>Users: {stats.users}</p>
+            </>
+          )}
+        </div>
       )}
 
-      {/* ================= MANAGER ================= */}
       {user.role === "Manager" && (
-        <>
+        <div>
           <h3>📊 Manager Dashboard</h3>
-
-          <div style={styles.statBox}>
-            {loading ? (
-              <p>Loading stats...</p>
-            ) : (
-              <>
-                <div style={styles.stat}>
-                  <h2>{stats.projects}</h2>
-                  <p>Projects</p>
-                </div>
-
-                <div style={styles.stat}>
-                  <h2>{stats.tasks}</h2>
-                  <p>Tasks</p>
-                </div>
-                    {/* ✅ NEW: Manager Task Breakdown */}
-                <div style={{ ...styles.stat, background: "#ffccc7" }}>
-                  <h2>{stats.pending}</h2>
-                  <p>Pending</p>
-                </div>
-
-                <div style={{ ...styles.stat, background: "#ffe58f" }}>
-                  <h2>{stats.inProgress}</h2>
-                  <p>In Progress</p>
-                </div>
-
-                <div style={{ ...styles.stat, background: "#b7eb8f" }}>
-                  <h2>{stats.completed}</h2>
-                  <p>Completed</p>
-                </div>
-              </>
-            )}
-          </div>
-        </>
+          {!loading && (
+            <>
+              <p>Projects: {stats.projects}</p>
+              <p>Tasks: {stats.tasks}</p>
+            </>
+          )}
+        </div>
       )}
 
-      {/* ================= EMPLOYEE ================= */}
       {user.role === "Employee" && (
-        <>
+        <div>
           <h3>🧑‍💻 Employee Dashboard</h3>
-
-          <div style={styles.statBox}>
-            {loading ? (
-              <p>Loading tasks...</p>
-            ) : (
-              <div style={styles.stat}>
-                <h2>{stats.tasks}</h2>
-                <p>My Assigned Tasks</p>
-              </div>
-            )}
-          </div>
-              {/* ✅ NEW: Employee Task Breakdown */}
-                <div style={{ ...styles.stat, background: "#ffccc7" }}>
-                  <h2>{stats.pending}</h2>
-                  <p>Pending</p>
-                </div>
-
-                <div style={{ ...styles.stat, background: "#ffe58f" }}>
-                  <h2>{stats.inProgress}</h2>
-                  <p>In Progress</p>
-                </div>
-
-                <div style={{ ...styles.stat, background: "#b7eb8f" }}>
-                  <h2>{stats.completed}</h2>
-                  <p>Completed</p>
-                </div>
-        </>
+          {!loading && <p>My Tasks: {stats.tasks}</p>}
+        </div>
       )}
-
-       <hr />
-
-    {user.role === "Admin" && (
-      <div>
-        <h3>🛠 Admin Panel</h3>
-        <ul>
-          <li>Manage Users</li>
-          <li>Create Companies</li>
-          <li>Assign Roles</li>
-          <li>View All Projects</li>
-        </ul>
-      </div>
-    )}
-
-    {user.role === "Manager" && (
-      <div>
-        <h3>📊 Manager Panel</h3>
-        <ul>
-          <li>Create Projects</li>
-          <li>Assign Tasks</li>
-          <li>Track Progress</li>
-          <li>View Team Tasks</li>
-        </ul>
-      </div>
-    )}
-
-    {user.role === "Employee" && (
-      <div>
-        <h3>🧑‍💻 Employee Panel</h3>
-        <ul>
-          <li>View Assigned Tasks</li>
-          <li>Update Task Status</li>
-          <li>Track Personal Work</li>
-        </ul>
-      </div>
-    )}
-
     </div>
   );
 }

@@ -99,6 +99,36 @@ router.put("/:id", verifyJWT, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+//=========================
+// Search ========================
+router.get("/", verifyJWT, async (req, res) => {
+  try {
+    const { status, search } = req.query;
+
+    let filter = {
+      companyId: req.user.companyId
+    };
+
+    // Employee restriction
+    if (req.user.role === "Employee") {
+      filter.assignedTo = req.user._id;
+    }
+
+    if (status) filter.status = status;
+
+    if (search) {
+      filter.title = { $regex: search, $options: "i" };
+    }
+
+    const tasks = await Task.find(filter)
+      .populate("assignedTo", "name email")
+      .populate("projectId", "name");
+
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 // ===============================
