@@ -1,12 +1,16 @@
 const Notification = require("../models/Notification");
 
 const createNotification = async (userId, message) => {
-  console.log("createNotification called");
+  if (!userId || !message) {
+    return null;
+  }
 
-  await Notification.create({
+  const notification = await Notification.create({
     userId,
     message,
   });
+
+  return notification;
 };
 
 module.exports = { createNotification };

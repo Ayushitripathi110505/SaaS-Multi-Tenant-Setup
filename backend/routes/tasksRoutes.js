@@ -5,7 +5,9 @@ const Task = require("../models/Task");
 const Project = require("../models/Project");
 const { verifyJWT } = require("../middleware/verifyJWT");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const { createNotification } = require("../utils/createNotification");
 
+// CREATE TASK
 router.post(
   "/",
   verifyJWT,
@@ -27,7 +29,7 @@ router.post(
 
       if (!project) {
         return res.status(404).json({
-          error: "Project not found in your company",
+          error: "Project not found",
         });
       }
 
@@ -41,6 +43,13 @@ router.post(
         companyId: req.user.companyId,
       });
 
+      if (assignedTo) {
+        await createNotification(
+          assignedTo,
+          "You have been assigned a new task"
+        );
+      }
+
       res.status(201).json(task);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -48,6 +57,7 @@ router.post(
   }
 );
 
+// GET TASKS
 router.get("/", verifyJWT, async (req, res) => {
   try {
     const { status, search } = req.query;
@@ -78,6 +88,7 @@ router.get("/", verifyJWT, async (req, res) => {
   }
 });
 
+// GET TASKS BY PROJECT
 router.get("/project/:projectId", verifyJWT, async (req, res) => {
   try {
     const filter = {
@@ -99,6 +110,7 @@ router.get("/project/:projectId", verifyJWT, async (req, res) => {
   }
 });
 
+// UPDATE TASK
 router.put("/:id", verifyJWT, async (req, res) => {
   try {
     const filter = {
@@ -110,14 +122,27 @@ router.put("/:id", verifyJWT, async (req, res) => {
       filter.assignedTo = req.user._id;
     }
 
+    const oldTask = await Task.findOne(filter);
+
+    if (!oldTask) {
+      return res.status(404).json({
+        error: "Task not found or access denied",
+      });
+    }
+
     const task = await Task.findOneAndUpdate(filter, req.body, {
       new: true,
     });
 
-    if (!task) {
-      return res.status(404).json({
-        error: "Task not found or access denied",
-      });
+    if (
+      task.assignedTo &&
+      req.body.status &&
+      req.body.status !== oldTask.status
+    ) {
+      await createNotification(
+        task.assignedTo,
+        `Task status updated to ${task.status}`
+      );
     }
 
     res.json(task);
@@ -126,6 +151,7 @@ router.put("/:id", verifyJWT, async (req, res) => {
   }
 });
 
+// DELETE TASK
 router.delete(
   "/:id",
   verifyJWT,

@@ -27,7 +27,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/tasks", taskRoutes);
-app.use("/notifications", notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 const PORT = process.env.PORT || 5000;
 

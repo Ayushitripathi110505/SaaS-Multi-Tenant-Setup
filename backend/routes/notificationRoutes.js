@@ -16,4 +16,27 @@ router.get("/", verifyJWT, async (req, res) => {
   }
 });
 
+router.put("/:id/read", verifyJWT, async (req, res) => {
+  try {
+    const notification = await Notification.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId: req.user._id,
+      },
+      { read: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({
+        error: "Notification not found",
+      });
+    }
+
+    res.json(notification);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
