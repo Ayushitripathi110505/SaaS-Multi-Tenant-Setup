@@ -2,103 +2,80 @@ const express = require("express");
 const router = express.Router();
 
 const Project = require("../models/Project");
-const { verifyJWT } = require("../middleware/authMiddleware");
-const { isAdmin, isManager } = require("../middleware/roleMiddleware");
+const { verifyJWT } = require("../middleware/verifyJWT");
+const roleMiddleware = require("../middleware/roleMiddleware");
 
-
-// ===============================
-// ✅ CREATE PROJECT (Admin / Manager)
-// ===============================
 router.post(
   "/",
   verifyJWT,
+  roleMiddleware(["Admin", "Manager"]),
   async (req, res) => {
     try {
-      // Optional: restrict creation
-      if (!["Admin", "Manager"].includes(req.user.role)) {
-        return res.status(403).json({ error: "Access denied" });
-      }
+      const { name, description, assignedTo, status } = req.body;
 
-      const { name, description, assignedTo } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "Project name is required" });
+      }
 
       const project = await Project.create({
         name,
-      description,
-      assignedTo: assignedTo || null, // 🔥 link user
-      createdBy: req.user._id,
+        description,
+        assignedTo: assignedTo || null,
+        status: status || "In Progress",
+        createdBy: req.user._id,
+        companyId: req.user.companyId,
+      });
+
+      res.status(201).json(project);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get("/", verifyJWT, async (req, res) => {
+  try {
+    const projects = await Project.find({
       companyId: req.user.companyId,
-      });
+    })
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email");
 
-      res.json(project);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
+    res.json(projects);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-);
+});
 
+router.get("/:id", verifyJWT, async (req, res) => {
+  try {
+    const project = await Project.findOne({
+      _id: req.params.id,
+      companyId: req.user.companyId,
+    })
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email");
 
-// ===============================
-// ✅ GET ALL PROJECTS (Company-wise)
-// ===============================
-router.get(
-  "/",
-  verifyJWT,
-  async (req, res) => {
-    try {
-      const projects = await Project.find({
-        companyId: req.user.companyId
-      }).populate("assignedTo", "name email") 
-      .populate("createdBy", "name");
-
-      res.json(projects);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
     }
+
+    res.json(project);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-);
+});
 
-
-// ===============================
-// ✅ GET SINGLE PROJECT
-// ===============================
-router.get(
-  "/:id",
-  verifyJWT,
-  async (req, res) => {
-    try {
-      const project = await Project.findOne({
-        _id: req.params.id,
-        companyId: req.user.companyId
-      });
-
-      if (!project) {
-        return res.status(404).json({ error: "Project not found" });
-      }
-
-      res.json(project);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-
-// ===============================
-// ✅ UPDATE PROJECT
-// ===============================
 router.put(
   "/:id",
   verifyJWT,
+  roleMiddleware(["Admin", "Manager"]),
   async (req, res) => {
     try {
-      if (!["Admin", "Manager"].includes(req.user.role)) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
       const project = await Project.findOneAndUpdate(
         {
           _id: req.params.id,
-          companyId: req.user.companyId
+          companyId: req.user.companyId,
         },
         req.body,
         { new: true }
@@ -115,29 +92,22 @@ router.put(
   }
 );
 
-
-// ===============================
-// ✅ DELETE PROJECT
-// ===============================
 router.delete(
   "/:id",
   verifyJWT,
+  roleMiddleware(["Admin"]),
   async (req, res) => {
     try {
-      if (req.user.role !== "Admin") {
-        return res.status(403).json({ error: "Only Admin can delete projects" });
-      }
-
       const project = await Project.findOneAndDelete({
         _id: req.params.id,
-        companyId: req.user.companyId
+        companyId: req.user.companyId,
       });
 
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
 
-      res.json({ message: "Project deleted" });
+      res.json({ message: "Project deleted successfully" });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

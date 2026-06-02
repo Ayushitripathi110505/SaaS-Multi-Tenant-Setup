@@ -4,7 +4,7 @@ import API from "../api/api";
 function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
-  const [projects, setProjects] = useState([]); // ✅ NEW: store projects separately
+  const [projects, setProjects] = useState([]);
 
   const [filter, setFilter] = useState("All");
   const [showModal, setShowModal] = useState(false);
@@ -13,103 +13,86 @@ function Tasks() {
     title: "",
     description: "",
     assignedTo: "",
-    projectId: ""
+    projectId: "",
   });
 
-  // ===============================
-  // ✅ FETCH TASKS
-  // ===============================
   const fetchTasks = async () => {
     try {
       const res = await API.get("/tasks");
       setTasks(res.data);
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
-  // ===============================
-  // ✅ FETCH USERS
-  // ===============================
   const fetchUsers = async () => {
     try {
-      const res = await API.get("/users");
+      const res = await API.get("/users/list");
       setUsers(res.data);
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
-  // ===============================
-  // ✅ FETCH PROJECTS (🔥 IMPORTANT FIX)
-  // ===============================
   const fetchProjects = async () => {
     try {
       const res = await API.get("/projects");
       setProjects(res.data);
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
-  // ===============================
-  // LOAD ALL DATA
-  // ===============================
   useEffect(() => {
     fetchTasks();
     fetchUsers();
-    fetchProjects(); // ✅ ADDED
+    fetchProjects();
   }, []);
 
-  // ===============================
-  // HANDLE FORM INPUT
-  // ===============================
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  // ===============================
-  // ✅ CREATE TASK
-  // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       await API.post("/tasks", {
         ...form,
-        status: "Pending" // ✅ standardized
+        assignedTo: form.assignedTo || null,
+        status: "Pending",
       });
 
-      // reset form
       setForm({
         title: "",
         description: "",
         assignedTo: "",
-        projectId: ""
+        projectId: "",
       });
 
       setShowModal(false);
       fetchTasks();
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "Task creation failed");
     }
   };
 
-  // ===============================
-  // UPDATE STATUS
-  // ===============================
   const updateStatus = async (id, status) => {
     try {
-      await API.put(`/tasks/${id}`, { status });
+      await API.put(`/tasks/${id}`, {
+        status,
+      });
+
       fetchTasks();
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
-  // ===============================
-  // ✅ GROUP TASKS BY PROJECT (ONLY FOR UI)
-  // ===============================
   const groupedTasks = tasks.reduce((acc, task) => {
     if (!task.projectId) return acc;
 
@@ -119,11 +102,12 @@ function Tasks() {
     if (!acc[projectId]) {
       acc[projectId] = {
         name: projectName,
-        tasks: []
+        tasks: [],
       };
     }
 
     acc[projectId].tasks.push(task);
+
     return acc;
   }, {});
 
@@ -131,17 +115,9 @@ function Tasks() {
     <div>
       <h2>📋 Tasks Dashboard</h2>
 
-      {/* ===============================
-          ✅ CREATE TASK BUTTON
-      =============================== */}
-      <button onClick={() => setShowModal(true)}>
-        + Create Task
-      </button>
+      <button onClick={() => setShowModal(true)}>+ Create Task</button>
 
-      {/* ===============================
-          FILTER
-      =============================== */}
-      <select onChange={(e) => setFilter(e.target.value)}>
+      <select value={filter} onChange={(e) => setFilter(e.target.value)}>
         <option value="All">All</option>
         <option value="Pending">Pending</option>
         <option value="In Progress">In Progress</option>
@@ -150,9 +126,6 @@ function Tasks() {
 
       <hr />
 
-      {/* ===============================
-          ✅ MODAL (CREATE TASK)
-      =============================== */}
       {showModal && (
         <div
           style={{
@@ -164,7 +137,7 @@ function Tasks() {
             background: "rgba(0,0,0,0.5)",
             display: "flex",
             justifyContent: "center",
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
           <div
@@ -172,7 +145,7 @@ function Tasks() {
               background: "#fff",
               padding: "20px",
               borderRadius: "10px",
-              width: "400px"
+              width: "400px",
             }}
           >
             <h3>Create Task</h3>
@@ -185,6 +158,7 @@ function Tasks() {
                 onChange={handleChange}
                 required
               />
+              <br />
 
               <input
                 name="description"
@@ -192,8 +166,8 @@ function Tasks() {
                 value={form.description}
                 onChange={handleChange}
               />
+              <br />
 
-              {/* ✅ PROJECT DROPDOWN (FIXED) */}
               <select
                 name="projectId"
                 value={form.projectId}
@@ -202,14 +176,14 @@ function Tasks() {
               >
                 <option value="">Select Project</option>
 
-                {projects.map((p) => ( // ✅ FIXED SOURCE
+                {projects.map((p) => (
                   <option key={p._id} value={p._id}>
                     {p.name}
                   </option>
                 ))}
               </select>
+              <br />
 
-              {/* USER DROPDOWN */}
               <select
                 name="assignedTo"
                 value={form.assignedTo}
@@ -220,7 +194,7 @@ function Tasks() {
 
                 {users.map((u) => (
                   <option key={u._id} value={u._id}>
-                    {u.name}
+                    {u.name} ({u.role})
                   </option>
                 ))}
               </select>
@@ -228,10 +202,8 @@ function Tasks() {
               <br />
 
               <button type="submit">Create</button>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-              >
+
+              <button type="button" onClick={() => setShowModal(false)}>
                 Cancel
               </button>
             </form>
@@ -239,15 +211,15 @@ function Tasks() {
         </div>
       )}
 
-      {/* ===============================
-          DISPLAY PROJECTS + TASKS
-      =============================== */}
-
       {projects.length === 0 ? (
-        <p>No Projects Found</p> // ✅ NOW WILL SHOW PROJECTS PROPERLY
+        <p>No Projects Found</p>
       ) : (
         projects.map((project) => {
           const projectTasks = groupedTasks[project._id]?.tasks || [];
+
+          const visibleTasks = projectTasks.filter((task) =>
+            filter === "All" ? true : task.status === filter
+          );
 
           return (
             <div
@@ -256,49 +228,42 @@ function Tasks() {
                 border: "1px solid #ccc",
                 padding: "15px",
                 marginBottom: "20px",
-                borderRadius: "8px"
+                borderRadius: "8px",
               }}
             >
               <h3>📁 {project.name}</h3>
 
-              {projectTasks.length === 0 ? (
-                <p>No tasks yet</p>
+              {visibleTasks.length === 0 ? (
+                <p>No tasks found</p>
               ) : (
-                projectTasks
-                  .filter((t) =>
-                    filter === "All" ? true : t.status === filter
-                  )
-                  .map((task) => (
-                    <div
-                      key={task._id}
-                      style={{
-                        border: "1px solid #ddd",
-                        padding: "10px",
-                        marginTop: "8px",
-                        borderRadius: "5px"
-                      }}
+                visibleTasks.map((task) => (
+                  <div
+                    key={task._id}
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "10px",
+                      marginTop: "8px",
+                      borderRadius: "5px",
+                    }}
+                  >
+                    <h4>{task.title}</h4>
+
+                    <p>{task.description}</p>
+
+                    <p>Assigned: {task.assignedTo?.name || "None"}</p>
+
+                    <p>Status: {task.status}</p>
+
+                    <select
+                      value={task.status}
+                      onChange={(e) => updateStatus(task._id, e.target.value)}
                     >
-                      <h4>{task.title}</h4>
-                      <p>{task.description}</p>
-
-                      <p>
-                        Assigned: {task.assignedTo?.name || "None"}
-                      </p>
-
-                      <p>Status: {task.status}</p>
-
-                      <select
-                        value={task.status}
-                        onChange={(e) =>
-                          updateStatus(task._id, e.target.value)
-                        }
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                      </select>
-                    </div>
-                  ))
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                ))
               )}
             </div>
           );

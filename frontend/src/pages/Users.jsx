@@ -11,9 +11,6 @@ function Users() {
     role: "Employee",
   });
 
-  // =========================
-  // Fetch Users
-  // =========================
   const fetchUsers = async () => {
     try {
       const res = await API.get("/users");
@@ -27,48 +24,42 @@ function Users() {
     fetchUsers();
   }, []);
 
-  // =========================
-  // Handle Input
-  // =========================
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // =========================
-  // Create User
-  // =========================
   const handleCreateUser = async (e) => {
     e.preventDefault();
 
     try {
       await API.post("/users", form);
+
       setForm({
         name: "",
         email: "",
         password: "",
         role: "Employee",
       });
+
       fetchUsers();
     } catch (err) {
       console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "User creation failed");
     }
   };
 
-  // =========================
-  // Update Role
-  // =========================
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await API.put(`/users/${userId}/role`, { role: newRole });
+      await API.put(`/users/${userId}/role`, {
+        role: newRole,
+      });
+
       fetchUsers();
     } catch (err) {
       console.log(err.response?.data || err.message);
     }
   };
 
-  // =========================
-  // Delete User
-  // =========================
   const handleDelete = async (userId) => {
     try {
       await API.delete(`/users/${userId}`);
@@ -82,7 +73,6 @@ function Users() {
     <div>
       <h2>👥 Users Management</h2>
 
-      {/* ================= CREATE USER ================= */}
       <h3>Create User</h3>
 
       <form onSubmit={handleCreateUser}>
@@ -97,6 +87,7 @@ function Users() {
 
         <input
           name="email"
+          type="email"
           placeholder="Email"
           value={form.email}
           onChange={handleChange}
@@ -126,7 +117,6 @@ function Users() {
 
       <hr />
 
-      {/* ================= USERS LIST ================= */}
       <h3>All Users</h3>
 
       {users.map((u) => (
@@ -138,29 +128,27 @@ function Users() {
             marginBottom: "10px",
           }}
         >
-          <p><strong>{u.name}</strong></p>
+          <p>
+            <strong>{u.name}</strong>
+          </p>
+
           <p>{u.email}</p>
 
           <p>Role: {u.role}</p>
 
-          {/* Change Role */}
           <select
             value={u.role}
-            onChange={(e) =>
-              handleRoleChange(u._id, e.target.value)
-            }
+            onChange={(e) => handleRoleChange(u._id, e.target.value)}
           >
             <option value="Employee">Employee</option>
             <option value="Manager">Manager</option>
             <option value="Admin">Admin</option>
           </select>
 
-          <br /><br />
+          <br />
+          <br />
 
-          {/* Delete */}
-          <button onClick={() => handleDelete(u._id)}>
-            Delete ❌
-          </button>
+          <button onClick={() => handleDelete(u._id)}>Delete ❌</button>
         </div>
       ))}
     </div>

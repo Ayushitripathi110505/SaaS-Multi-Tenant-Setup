@@ -7,12 +7,14 @@ function Dashboard() {
   const { user, logout } = useContext(AuthContext);
 
   const [stats, setStats] = useState({
-    projects: 0,
-    tasks: 0,
-    users: 0,
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
+    totalProjects: 0,
+    totalTasks: 0,
+    totalUsers: 0,
+    pendingTasks: 0,
+    inProgressTasks: 0,
+    completedTasks: 0,
+    completedProjects: 0,
+    inProgressProjects: 0,
   });
 
   const [tasks, setTasks] = useState([]);
@@ -20,7 +22,6 @@ function Dashboard() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // ================= STYLES =================
   const styles = {
     container: {
       padding: "30px",
@@ -48,33 +49,30 @@ function Dashboard() {
     },
   };
 
-  // ================= CHART =================
   const chartData = [
-    { name: "Pending", value: stats.pending },
-    { name: "In Progress", value: stats.inProgress },
-    { name: "Completed", value: stats.completed },
+    { name: "Pending", value: stats.pendingTasks },
+    { name: "In Progress", value: stats.inProgressTasks },
+    { name: "Completed", value: stats.completedTasks },
   ];
 
   const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
 
-  // ================= FETCH TASKS =================
   const fetchTasks = async () => {
     try {
-      let query = [];
+      const query = [];
 
       if (status) query.push(`status=${status}`);
       if (search) query.push(`search=${search}`);
 
-      const url = `/tasks?${query.join("&")}`;
+      const url = query.length > 0 ? `/tasks?${query.join("&")}` : "/tasks";
 
       const res = await API.get(url);
       setTasks(res.data);
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
-  // ✅ Debounce
   useEffect(() => {
     const delay = setTimeout(() => {
       fetchTasks();
@@ -83,7 +81,6 @@ function Dashboard() {
     return () => clearTimeout(delay);
   }, [search, status]);
 
-  // ================= FETCH STATS =================
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -97,26 +94,25 @@ function Dashboard() {
     };
 
     fetchStats();
+    fetchTasks();
   }, []);
 
-  // ================= CALC =================
   const completionRate =
-    stats.tasks > 0
-      ? Math.round((stats.completed / stats.tasks) * 100)
+    stats.totalTasks > 0
+      ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
       : 0;
 
   if (!user) return <p>Loading...</p>;
 
   return (
     <div style={styles.container}>
-
-      {/* 👋 Welcome */}
       <h1>Welcome, {user.name} 👋</h1>
 
-      {/* ================= PROGRESS ================= */}
       <h2>Task Progress</h2>
+
       <p>
-        {stats.completed} / {stats.tasks} Tasks Completed ({completionRate}%)
+        {stats.completedTasks} / {stats.totalTasks} Tasks Completed (
+        {completionRate}%)
       </p>
 
       <div style={{ width: "100%", background: "#eee", borderRadius: "10px" }}>
@@ -133,11 +129,9 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* ================= TASK SECTION ================= */}
       <div style={{ marginTop: "20px" }}>
         <h2>Tasks</h2>
 
-        {/* 🔍 Search + Filter */}
         <div style={{ marginBottom: "10px" }}>
           <input
             style={styles.input}
@@ -152,15 +146,14 @@ function Dashboard() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="">All</option>
-            <option value="pending">Pending</option>
-            <option value="inProgress">In Progress</option>
-            <option value="completed">Completed</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
           </select>
         </div>
 
         <h4>Total Tasks Found: {tasks.length}</h4>
 
-        {/* 📋 Task List */}
         {tasks.length === 0 ? (
           <p>No tasks found</p>
         ) : (
@@ -170,13 +163,20 @@ function Dashboard() {
               <p>
                 Status: <strong>{task.status}</strong>
               </p>
+              <p>
+                Project: <strong>{task.projectId?.name || "N/A"}</strong>
+              </p>
+              <p>
+                Assigned To:{" "}
+                <strong>{task.assignedTo?.name || "Unassigned"}</strong>
+              </p>
             </div>
           ))
         )}
       </div>
 
-      {/* ================= CHART ================= */}
       <h3>Task Distribution</h3>
+
       <PieChart width={300} height={300}>
         <Pie
           data={chartData}
@@ -190,11 +190,11 @@ function Dashboard() {
             <Cell key={index} fill={COLORS[index]} />
           ))}
         </Pie>
+
         <Tooltip />
         <Legend />
       </PieChart>
 
-      {/* ================= PROFILE ================= */}
       <div style={styles.card}>
         <h3>Profile</h3>
         <p>Email: {user.email}</p>
@@ -202,15 +202,17 @@ function Dashboard() {
         <button onClick={logout}>Logout</button>
       </div>
 
-      {/* ================= ROLE DASHBOARDS ================= */}
       {user.role === "Admin" && (
         <div>
           <h3>🛠 Admin Dashboard</h3>
+
           {!loading && (
             <>
-              <p>Projects: {stats.projects}</p>
-              <p>Tasks: {stats.tasks}</p>
-              <p>Users: {stats.users}</p>
+              <p>Projects: {stats.totalProjects}</p>
+              <p>Tasks: {stats.totalTasks}</p>
+              <p>Users: {stats.totalUsers}</p>
+              <p>Completed Projects: {stats.completedProjects}</p>
+              <p>In Progress Projects: {stats.inProgressProjects}</p>
             </>
           )}
         </div>
@@ -219,10 +221,14 @@ function Dashboard() {
       {user.role === "Manager" && (
         <div>
           <h3>📊 Manager Dashboard</h3>
+
           {!loading && (
             <>
-              <p>Projects: {stats.projects}</p>
-              <p>Tasks: {stats.tasks}</p>
+              <p>Projects: {stats.totalProjects}</p>
+              <p>Tasks: {stats.totalTasks}</p>
+              <p>Pending Tasks: {stats.pendingTasks}</p>
+              <p>In Progress Tasks: {stats.inProgressTasks}</p>
+              <p>Completed Tasks: {stats.completedTasks}</p>
             </>
           )}
         </div>
@@ -231,7 +237,13 @@ function Dashboard() {
       {user.role === "Employee" && (
         <div>
           <h3>🧑‍💻 Employee Dashboard</h3>
-          {!loading && <p>My Tasks: {stats.tasks}</p>}
+
+          {!loading && (
+            <>
+              <p>My Company Tasks: {stats.totalTasks}</p>
+              <p>Completed Tasks: {stats.completedTasks}</p>
+            </>
+          )}
         </div>
       )}
     </div>

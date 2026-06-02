@@ -10,13 +10,15 @@ function Signup() {
     email: "",
     password: "",
     role: "Employee",
-    
     adminKey: "",
-    companyCode:""
+    companyCode: "",
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -24,6 +26,7 @@ function Signup() {
 
     try {
       await API.post("/auth/register", form);
+
       alert("Signup successful");
       navigate("/login");
     } catch (err) {
@@ -36,33 +39,58 @@ function Signup() {
       <h2>Signup</h2>
 
       <form onSubmit={handleSubmit}>
-
-        <input name="name" placeholder="Name" onChange={handleChange} />
+        <input
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
         <br />
 
-        <input name="email" placeholder="Email" onChange={handleChange} />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
         <br />
 
-        <input type="password" name="password" placeholder="Password" onChange={handleChange} />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
         <br />
 
-        <input type="text" name="companyCode" value={form.companyCode} placeholder="Company Code" onChange={handleChange} />
+        <input
+          type="text"
+          name="companyCode"
+          value={form.companyCode}
+          placeholder="Company Code"
+          onChange={handleChange}
+          required
+        />
         <br />
 
-        {/* Role Selection */}
-        <select name="role" onChange={handleChange}>
+        <select name="role" value={form.role} onChange={handleChange}>
           <option value="Employee">Employee</option>
           <option value="Manager">Manager</option>
           <option value="Admin">Admin</option>
         </select>
         <br />
 
-        {/* 🔐 Show only if Admin selected */}
         {form.role === "Admin" && (
           <>
             <input
               name="adminKey"
               placeholder="Enter Admin Secret Key"
+              value={form.adminKey}
               onChange={handleChange}
             />
             <br />

@@ -15,20 +15,17 @@ function ProjectDetails() {
     assignedTo: "",
   });
 
-  // ===============================
-  // Fetch all data
-  // ===============================
   const fetchData = async () => {
     try {
       const projectRes = await API.get(`/projects/${id}`);
       const tasksRes = await API.get(`/tasks/project/${id}`);
-      const usersRes = await API.get(`/users`); // ✅ FIXED
+      const usersRes = await API.get("/users/list");
 
       setProject(projectRes.data);
       setTasks(tasksRes.data);
       setUsers(usersRes.data);
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
@@ -36,16 +33,13 @@ function ProjectDetails() {
     fetchData();
   }, [id]);
 
-  // ===============================
-  // Handle input
-  // ===============================
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  // ===============================
-  // Create Task
-  // ===============================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -53,40 +47,50 @@ function ProjectDetails() {
       await API.post("/tasks", {
         title: form.title,
         description: form.description,
-        assignedTo: form.assignedTo,
-        projectId: id, // ✅ correct
+        assignedTo: form.assignedTo || null,
+        projectId: id,
         status: "Pending",
       });
 
-      setForm({ title: "", description: "", assignedTo: "" });
+      setForm({
+        title: "",
+        description: "",
+        assignedTo: "",
+      });
+
       fetchData();
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "Task creation failed");
     }
   };
 
-  // ===============================
-  // Update status
-  // ===============================
   const updateStatus = async (taskId, status) => {
     try {
-      await API.put(`/tasks/${taskId}`, { status });
+      await API.put(`/tasks/${taskId}`, {
+        status,
+      });
+
       fetchData();
     } catch (err) {
-      console.log(err);
+      console.log(err.response?.data || err.message);
     }
   };
 
-  if (!project) return <p>Loading...</p>;
+  if (!project) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div style={{ padding: "20px" }}>
       <h2>📁 {project.name}</h2>
+
       <p>{project.description}</p>
+
+      <p>Status: {project.status}</p>
 
       <hr />
 
-      {/* ================= Create Task ================= */}
       <h3>Create Task</h3>
 
       <form onSubmit={handleSubmit}>
@@ -109,7 +113,6 @@ function ProjectDetails() {
         />
         <br />
 
-        {/* ✅ USER DROPDOWN */}
         <select
           name="assignedTo"
           value={form.assignedTo}
@@ -117,6 +120,7 @@ function ProjectDetails() {
           required
         >
           <option value="">Select User</option>
+
           {users.map((u) => (
             <option key={u._id} value={u._id}>
               {u.name} ({u.role})
@@ -131,7 +135,6 @@ function ProjectDetails() {
 
       <hr />
 
-      {/* ================= Tasks ================= */}
       <h3>Tasks</h3>
 
       {tasks.length === 0 && <p>No tasks found</p>}
@@ -146,23 +149,20 @@ function ProjectDetails() {
           }}
         >
           <h4>{task.title}</h4>
+
           <p>{task.description}</p>
 
-          <p>
-            Assigned To: {task.assignedTo?.name || "Unassigned"}
-          </p>
+          <p>Assigned To: {task.assignedTo?.name || "Unassigned"}</p>
 
           <p>Status: {task.status}</p>
 
           <select
             value={task.status}
-            onChange={(e) =>
-              updateStatus(task._id, e.target.value)
-            }
+            onChange={(e) => updateStatus(task._id, e.target.value)}
           >
-            <option value="Todo">Todo</option>
+            <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
-            <option value="Done">Done</option>
+            <option value="Completed">Completed</option>
           </select>
         </div>
       ))}

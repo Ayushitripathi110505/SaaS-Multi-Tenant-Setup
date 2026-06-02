@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import API from "../api/api";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 function Start() {
@@ -19,4 +18,5 @@ function Start() {
     </div>
   );
 }
+
 export default Start;

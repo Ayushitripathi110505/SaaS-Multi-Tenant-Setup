@@ -3,12 +3,9 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 
 const User = require("../models/User");
-const { verifyJWT } = require("../middleware/authMiddleware");
+const { verifyJWT } = require("../middleware/verifyJWT");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
-// ===============================
-// ✅ GET ALL USERS (Admin only)
-// ===============================
 router.get(
   "/",
   verifyJWT,
@@ -26,9 +23,18 @@ router.get(
   }
 );
 
-// ===============================
-// ✅ CREATE USER (Admin only)
-// ===============================
+router.get("/list", verifyJWT, async (req, res) => {
+  try {
+    const users = await User.find({
+      companyId: req.user.companyId,
+    }).select("name email role");
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post(
   "/",
   verifyJWT,
@@ -37,35 +43,39 @@ router.post(
     try {
       const { name, email, password, role } = req.body;
 
-      // check existing user
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ error: "User already exists" });
+      if (!name || !email || !password) {
+        return res.status(400).json({
+          error: "Name, email and password are required",
+        });
       }
-    
 
-      // hash password
+      const existingUser = await User.findOne({ email });
+
+      if (existingUser) {
+        return res.status(400).json({
+          error: "User already exists",
+        });
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await User.create({
         name,
         email,
         password: hashedPassword,
-        role,
+        role: role || "Employee",
         companyId: req.user.companyId,
-         // 🔥 enforce same company
       });
 
-      res.json(user);
+      const { password: _, ...userWithoutPassword } = user._doc;
+
+      res.status(201).json(userWithoutPassword);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }
 );
 
-// ===============================
-// ✅ UPDATE USER ROLE (Admin only)
-// ===============================
 router.put(
   "/:id/role",
   verifyJWT,
@@ -74,11 +84,20 @@ router.put(
     try {
       const { role } = req.body;
 
-      const user = await User.findByIdAndUpdate(
-        req.params.id,
+      const user = await User.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          companyId: req.user.companyId,
+        },
         { role },
         { new: true }
       ).select("-password");
+
+      if (!user) {
+        return res.status(404).json({
+          error: "User not found",
+        });
+      }
 
       res.json(user);
     } catch (err) {
@@ -87,33 +106,24 @@ router.put(
   }
 );
 
-// ===============================
-// ✅ DELETE USER (Admin only)
-// ===============================
 router.delete(
   "/:id",
   verifyJWT,
   roleMiddleware(["Admin"]),
   async (req, res) => {
     try {
-      await User.findByIdAndDelete(req.params.id);
-      res.json({ message: "User deleted" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.get(
-  "/list",
-  verifyJWT,
-  async (req, res) => {
-    try {
-      const users = await User.find({
+      const user = await User.findOneAndDelete({
+        _id: req.params.id,
         companyId: req.user.companyId,
-      }).select("name role");
+      });
 
-      res.json(users);
+      if (!user) {
+        return res.status(404).json({
+          error: "User not found",
+        });
+      }
+
+      res.json({ message: "User deleted successfully" });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

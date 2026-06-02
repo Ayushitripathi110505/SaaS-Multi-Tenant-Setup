@@ -13,7 +13,10 @@ function Login() {
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -22,12 +25,12 @@ function Login() {
     try {
       const res = await API.post("/auth/login", form);
 
-      login(res.data); // store user + token
+      login(res.data);
 
       navigate("/dashboard");
     } catch (err) {
-      console.log(err.response?.data);
-      alert(err.response?.data?.message || "Login failed");
+      console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "Login failed");
     }
   };
 
@@ -38,9 +41,11 @@ function Login() {
 
         <input
           name="email"
+          type="email"
           placeholder="Email"
           value={form.email}
           onChange={handleChange}
+          required
         />
 
         <input
@@ -49,11 +54,7 @@ function Login() {
           placeholder="Password"
           value={form.password}
           onChange={handleChange}
-        />
-        <input
-        name="companyCode"
-        placeholder="Company Code"
-        onChange={handleChange}
+          required
         />
 
         <button type="submit">Login</button>

@@ -1,9 +1,12 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./styles/tailwind.css";
-import Start from "./pages/FirstPage";
+
+import Start from "./pages/Start";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import CreateCompany from "./pages/CreateCompany";
+
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import ManagerPanel from "./pages/ManagerPanel";
@@ -11,16 +14,17 @@ import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import ProjectDetails from "./pages/ProjectDetails";
 import Users from "./pages/Users";
+
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
-import CreateCompany from "./pages/CreateCompany";
 
-// 🔐 Role-based wrapper
 function RoleRoute({ children, role }) {
   const { user } = useAuth();
 
-  if (!user) return null;
+  if (!user) {
+    return <h2 style={{ padding: "20px" }}>Please login first</h2>;
+  }
 
   if (user.role !== role) {
     return <h2 style={{ padding: "20px" }}>Access Denied ❌</h2>;
@@ -33,109 +37,94 @@ function App() {
   return (
     <Router>
       <Routes>
-
-        {/* Default */}
         <Route path="/" element={<Start />} />
 
-        {/* Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/create-company" element={<CreateCompany />} />
-        {/* Dashboard */}
+
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-                <Layout>
-                 <Dashboard />
-                </Layout>
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
 
-        {/* Projects */}
         <Route
           path="/projects"
           element={
             <ProtectedRoute>
-                <Layout>
-                  <Projects />
-                </Layout>
-             </ProtectedRoute>
-          }
-        />
-
-        {/* Project Details */}
-        <Route
-          path="/projects/:id"
-          element={
-            <ProtectedRoute>
-               <Layout>
-                <ProjectDetails />
-                </Layout>
-              
+              <Layout>
+                <Projects />
+              </Layout>
             </ProtectedRoute>
           }
         />
 
-        {/* Tasks */}
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ProjectDetails />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/tasks"
           element={
             <ProtectedRoute>
               <Layout>
-                 <Tasks />
-                </Layout>
-             
+                <Tasks />
+              </Layout>
             </ProtectedRoute>
           }
         />
 
-        {/* Users (Admin) */}
         <Route
           path="/users"
           element={
             <ProtectedRoute>
               <Layout>
                 <RoleRoute role="Admin">
-                <Users />
-              </RoleRoute>
+                  <Users />
+                </RoleRoute>
               </Layout>
-              
             </ProtectedRoute>
           }
         />
 
-        {/* Admin Panel */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute>
-               <Layout>
+              <Layout>
                 <RoleRoute role="Admin">
-                <AdminPanel />
-              </RoleRoute>
-               </Layout>
-              
+                  <AdminPanel />
+                </RoleRoute>
+              </Layout>
             </ProtectedRoute>
           }
         />
 
-        {/* Manager Panel */}
         <Route
           path="/manager"
           element={
             <ProtectedRoute>
-               <Layout>
-                 <RoleRoute role="Manager">
-                <ManagerPanel />
-              </RoleRoute>
-               </Layout>
-             
+              <Layout>
+                <RoleRoute role="Manager">
+                  <ManagerPanel />
+                </RoleRoute>
+              </Layout>
             </ProtectedRoute>
           }
         />
-
       </Routes>
     </Router>
   );

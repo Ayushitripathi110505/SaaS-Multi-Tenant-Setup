@@ -41,34 +41,34 @@ function Sidebar() {
         Dashboard
       </Link>
 
-      {/* Admin */}
       {user?.role === "Admin" && (
         <>
           <Link style={{ ...styles.link, ...isActive("/users") }} to="/users">
             Users
           </Link>
+
           <Link style={{ ...styles.link, ...isActive("/projects") }} to="/projects">
             Projects
           </Link>
+
           <Link style={{ ...styles.link, ...isActive("/tasks") }} to="/tasks">
             Tasks
           </Link>
         </>
       )}
 
-      {/* Manager */}
       {user?.role === "Manager" && (
         <>
           <Link style={{ ...styles.link, ...isActive("/projects") }} to="/projects">
             Projects
           </Link>
+
           <Link style={{ ...styles.link, ...isActive("/tasks") }} to="/tasks">
             Tasks
           </Link>
         </>
       )}
 
-      {/* Employee */}
       {user?.role === "Employee" && (
         <Link style={{ ...styles.link, ...isActive("/tasks") }} to="/tasks">
           My Tasks
