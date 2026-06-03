@@ -56,7 +56,8 @@ router.post(
       if (assignedTo) {
         await createNotification(
           assignedTo,
-          "You have been assigned a new task"
+          "You have been assigned a new task",
+          req.app.get("io")
         );
       }
       await createLog(
@@ -162,7 +163,8 @@ router.put("/:id", verifyJWT, async (req, res) => {
     ) {
       await createNotification(
         task.assignedTo,
-        `Task status updated to ${task.status}`
+        `Task status updated to ${task.status}`,
+        req.app.get("io")
       );
     }
     await createLog(

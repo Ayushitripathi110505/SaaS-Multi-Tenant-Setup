@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
+import { io } from "socket.io-client";
 
 const styles = {
   navbar: {
@@ -67,10 +68,22 @@ function Navbar() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user]);
+  if (!user) return;
+
+  fetchNotifications();
+
+  const socket = io("http://localhost:5000");
+
+  socket.emit("join", user._id);
+
+  socket.on("newNotification", (notification) => {
+    setNotifications((prev) => [notification, ...prev]);
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, [user]);
 
   const handleLogout = () => {
     logout();
