@@ -149,6 +149,35 @@ function Projects() {
 
           <p>Status: {p.status}</p>
 
+          <p>
+            Tasks: {p.completedTasks || 0} / {p.totalTasks || 0}
+          </p>
+
+          <p>Progress: {p.progress || 0}%</p>
+
+          <div
+            style={{
+              width: "100%",
+              background: "#ddd",
+              borderRadius: "10px",
+              overflow: "hidden",
+              marginBottom: "10px",
+            }}
+          >
+            <div
+              style={{
+                width: `${p.progress || 0}%`,
+                background: "green",
+                color: "white",
+                padding: "5px",
+                borderRadius: "10px",
+                textAlign: "center",
+              }}
+            >
+              {p.progress || 0}%
+            </div>
+          </div>
+
           <button onClick={() => handleDelete(p._id)}>Delete</button>
         </div>
       ))}

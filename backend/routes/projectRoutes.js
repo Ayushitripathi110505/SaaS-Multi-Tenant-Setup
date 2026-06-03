@@ -4,6 +4,7 @@ const router = express.Router();
 const Project = require("../models/Project");
 const { verifyJWT } = require("../middleware/verifyJWT");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const Task = require("../models/Task");
 
 router.post(
   "/",
@@ -41,7 +42,32 @@ router.get("/", verifyJWT, async (req, res) => {
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email");
 
-    res.json(projects);
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project) => {
+        const totalTasks = await Task.countDocuments({
+          projectId: project._id,
+          companyId: req.user.companyId,
+        });
+
+        const completedTasks = await Task.countDocuments({
+          projectId: project._id,
+          companyId: req.user.companyId,
+          status: "Completed",
+        });
+
+        const progress =
+          totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        return {
+          ...project._doc,
+          totalTasks,
+          completedTasks,
+          progress,
+        };
+      })
+    );
+
+    res.json(projectsWithProgress);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

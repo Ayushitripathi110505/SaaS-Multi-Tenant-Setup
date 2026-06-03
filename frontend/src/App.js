@@ -12,7 +12,7 @@ import AdminPanel from "./pages/AdminPanel";
 import ManagerPanel from "./pages/ManagerPanel";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
-import ProjectDetails from "./pages/ProjectDetails";
+import ProjectDetails from "./pages/ProjectDetails.jsx";
 import Users from "./pages/Users";
 import Logs from "./pages/Logs";
 import CompanySettings from "./pages/CompanySettings";

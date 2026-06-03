@@ -46,7 +46,14 @@ const taskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
       required: true
-    }
+    },
+    attachments: [
+    {
+      filename: String,
+      path: String,
+      originalName: String,
+    },
+    ]
   },
   { timestamps: true }
 );

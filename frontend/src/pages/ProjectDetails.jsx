@@ -3,11 +3,16 @@ import { useParams } from "react-router-dom";
 import API from "../api/api";
 
 function ProjectDetails() {
+ 
   const { id } = useParams();
 
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
+
+  const [comments, setComments] = useState({});
+  const [commentText, setCommentText] = useState({});
+  const [selectedFiles, setSelectedFiles] = useState({});
 
   const [form, setForm] = useState({
     title: "",
@@ -73,10 +78,7 @@ function ProjectDetails() {
 
   const updateStatus = async (taskId, status) => {
     try {
-      await API.put(`/tasks/${taskId}`, {
-        status,
-      });
-
+      await API.put(`/tasks/${taskId}`, { status });
       fetchData();
     } catch (err) {
       console.log(err.response?.data || err.message);
@@ -85,13 +87,75 @@ function ProjectDetails() {
 
   const updatePriority = async (taskId, priority) => {
     try {
-      await API.put(`/tasks/${taskId}`, {
-        priority,
+      await API.put(`/tasks/${taskId}`, { priority });
+      fetchData();
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+    }
+  };
+
+  const fetchComments = async (taskId) => {
+    try {
+      const res = await API.get(`/comments/${taskId}`);
+
+      setComments((prev) => ({
+        ...prev,
+        [taskId]: res.data,
+      }));
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+    }
+  };
+
+  const addComment = async (taskId) => {
+    try {
+      if (!commentText[taskId]) {
+        return;
+      }
+
+      await API.post(`/comments/${taskId}`, {
+        text: commentText[taskId],
       });
+
+      setCommentText((prev) => ({
+        ...prev,
+        [taskId]: "",
+      }));
+
+      fetchComments(taskId);
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "Comment failed");
+    }
+  };
+
+  const uploadFile = async (taskId) => {
+    try {
+      const file = selectedFiles[taskId];
+
+      if (!file) {
+        alert("Please select a file first");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      await API.post(`/upload/task/${taskId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setSelectedFiles((prev) => ({
+        ...prev,
+        [taskId]: null,
+      }));
 
       fetchData();
     } catch (err) {
       console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "File upload failed");
     }
   };
 
@@ -104,7 +168,6 @@ function ProjectDetails() {
       <h2>📁 {project.name}</h2>
 
       <p>{project.description}</p>
-
       <p>Status: {project.status}</p>
 
       <hr />
@@ -221,6 +284,82 @@ function ProjectDetails() {
               ? new Date(task.dueDate).toLocaleDateString()
               : "No due date"}
           </p>
+
+          <hr />
+          <p style={{ color: "red" }}>TEST: Comments and Uploads section loaded</p>
+          <h4>📎 Attachments</h4>
+
+          <input
+            type="file"
+            onChange={(e) =>
+              setSelectedFiles({
+                ...selectedFiles,
+                [task._id]: e.target.files[0],
+              })
+            }
+          />
+
+          <button type="button" onClick={() => uploadFile(task._id)}>
+            Upload File
+          </button>
+
+          {(!task.attachments || task.attachments.length === 0) && (
+            <p>No files uploaded</p>
+          )}
+
+          {task.attachments?.map((file, index) => (
+            <p key={index}>
+              <a
+                href={`http://localhost:5000${file.path}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {file.originalName}
+              </a>
+            </p>
+          ))}
+
+          <hr />
+
+          <h4>💬 Comments</h4>
+
+          <button type="button" onClick={() => fetchComments(task._id)}>
+            Show Comments
+          </button>
+
+          <br />
+
+          <input
+            placeholder="Write comment..."
+            value={commentText[task._id] || ""}
+            onChange={(e) =>
+              setCommentText({
+                ...commentText,
+                [task._id]: e.target.value,
+              })
+            }
+          />
+
+          <button type="button" onClick={() => addComment(task._id)}>
+            Add Comment
+          </button>
+
+          {comments[task._id]?.map((comment) => (
+            <div
+              key={comment._id}
+              style={{
+                border: "1px solid #ddd",
+                padding: "5px",
+                marginTop: "5px",
+              }}
+            >
+              <p>
+                <strong>{comment.userId?.name}</strong>: {comment.text}
+              </p>
+
+              <small>{new Date(comment.createdAt).toLocaleString()}</small>
+            </div>
+          ))}
         </div>
       ))}
     </div>
