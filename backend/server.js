@@ -10,6 +10,9 @@ const projectRoutes = require("./routes/projectRoutes");
 const taskRoutes = require("./routes/tasksRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const commentRoutes = require("./routes/commentRoutes");
+const logRoutes = require("./routes/logRoutes");
+const companyRoutes = require("./routes/companyRoutes");
 
 const app = express();
 
@@ -28,6 +31,9 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/logs", logRoutes);
+app.use("/api/company", companyRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -14,6 +14,8 @@ import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import ProjectDetails from "./pages/ProjectDetails";
 import Users from "./pages/Users";
+import Logs from "./pages/Logs";
+import CompanySettings from "./pages/CompanySettings";
 
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -94,6 +96,32 @@ function App() {
               <Layout>
                 <RoleRoute role="Admin">
                   <Users />
+                </RoleRoute>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+          <Route
+          path="/logs"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <RoleRoute role="Admin">
+                  <Logs />
+                </RoleRoute>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/company-settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <RoleRoute role="Admin">
+                  <CompanySettings />
                 </RoleRoute>
               </Layout>
             </ProtectedRoute>

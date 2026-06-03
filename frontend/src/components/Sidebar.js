@@ -54,6 +54,16 @@ function Sidebar() {
           <Link style={{ ...styles.link, ...isActive("/tasks") }} to="/tasks">
             Tasks
           </Link>
+
+          <Link style={{ ...styles.link, ...isActive("/logs") }} to="/logs">
+            Logs
+          </Link>
+
+          <Link
+            style={{ ...styles.link, ...isActive("/company-settings") }}
+            to="/company-settings">
+            Company Settings
+          </Link>
         </>
       )}
 

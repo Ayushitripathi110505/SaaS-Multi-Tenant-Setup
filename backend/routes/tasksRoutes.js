@@ -6,7 +6,7 @@ const Project = require("../models/Project");
 const { verifyJWT } = require("../middleware/verifyJWT");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const { createNotification } = require("../utils/createNotification");
-
+const { createLog } = require("../utils/createLog");
 // CREATE TASK
 router.post(
   "/",
@@ -14,7 +14,15 @@ router.post(
   roleMiddleware(["Admin", "Manager"]),
   async (req, res) => {
     try {
-      const { title, description, assignedTo, projectId, status } = req.body;
+      const {
+        title,
+        description,
+        assignedTo,
+        projectId,
+        status,
+        priority,
+        dueDate,
+      } = req.body;
 
       if (!title || !projectId) {
         return res.status(400).json({
@@ -39,6 +47,8 @@ router.post(
         assignedTo: assignedTo || null,
         projectId,
         status: status || "Pending",
+        priority: priority || "Medium",
+        dueDate: dueDate || null,
         createdBy: req.user._id,
         companyId: req.user.companyId,
       });
@@ -49,6 +59,11 @@ router.post(
           "You have been assigned a new task"
         );
       }
+      await createLog(
+      req.user._id,
+      req.user.companyId,
+      `Created task: ${task.title}`
+    );
 
       res.status(201).json(task);
     } catch (err) {
@@ -60,7 +75,7 @@ router.post(
 // GET TASKS
 router.get("/", verifyJWT, async (req, res) => {
   try {
-    const { status, search } = req.query;
+    const { status, search, priority } = req.query;
 
     const filter = {
       companyId: req.user.companyId,
@@ -74,13 +89,18 @@ router.get("/", verifyJWT, async (req, res) => {
       filter.status = status;
     }
 
+    if (priority) {
+      filter.priority = priority;
+    }
+
     if (search) {
       filter.title = { $regex: search, $options: "i" };
     }
 
     const tasks = await Task.find(filter)
       .populate("assignedTo", "name email")
-      .populate("projectId", "name");
+      .populate("projectId", "name")
+      .sort({ dueDate: 1 });
 
     res.json(tasks);
   } catch (err) {
@@ -102,7 +122,8 @@ router.get("/project/:projectId", verifyJWT, async (req, res) => {
 
     const tasks = await Task.find(filter)
       .populate("assignedTo", "name email")
-      .populate("projectId", "name");
+      .populate("projectId", "name")
+      .sort({ dueDate: 1 });
 
     res.json(tasks);
   } catch (err) {
@@ -144,6 +165,11 @@ router.put("/:id", verifyJWT, async (req, res) => {
         `Task status updated to ${task.status}`
       );
     }
+    await createLog(
+      req.user._id,
+      req.user.companyId,
+      `Updated task: ${task.title}`
+    );
 
     res.json(task);
   } catch (err) {
@@ -168,6 +194,11 @@ router.delete(
           error: "Task not found",
         });
       }
+      await createLog(
+      req.user._id,
+      req.user.companyId,
+      `Deleted task: ${task.title}`
+    );
 
       res.json({ message: "Task deleted successfully" });
     } catch (err) {

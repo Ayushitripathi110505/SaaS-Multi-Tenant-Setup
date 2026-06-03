@@ -13,6 +13,8 @@ function ProjectDetails() {
     title: "",
     description: "",
     assignedTo: "",
+    priority: "Medium",
+    dueDate: "",
   });
 
   const fetchData = async () => {
@@ -50,12 +52,16 @@ function ProjectDetails() {
         assignedTo: form.assignedTo || null,
         projectId: id,
         status: "Pending",
+        priority: form.priority,
+        dueDate: form.dueDate || null,
       });
 
       setForm({
         title: "",
         description: "",
         assignedTo: "",
+        priority: "Medium",
+        dueDate: "",
       });
 
       fetchData();
@@ -69,6 +75,18 @@ function ProjectDetails() {
     try {
       await API.put(`/tasks/${taskId}`, {
         status,
+      });
+
+      fetchData();
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+    }
+  };
+
+  const updatePriority = async (taskId, priority) => {
+    try {
+      await API.put(`/tasks/${taskId}`, {
+        priority,
       });
 
       fetchData();
@@ -130,6 +148,27 @@ function ProjectDetails() {
 
         <br />
 
+        <select
+          name="priority"
+          value={form.priority}
+          onChange={handleChange}
+        >
+          <option value="Low">Low Priority</option>
+          <option value="Medium">Medium Priority</option>
+          <option value="High">High Priority</option>
+        </select>
+
+        <br />
+
+        <input
+          type="date"
+          name="dueDate"
+          value={form.dueDate}
+          onChange={handleChange}
+        />
+
+        <br />
+
         <button type="submit">Create Task</button>
       </form>
 
@@ -164,6 +203,24 @@ function ProjectDetails() {
             <option value="In Progress">In Progress</option>
             <option value="Completed">Completed</option>
           </select>
+
+          <p>Priority: {task.priority}</p>
+
+          <select
+            value={task.priority || "Medium"}
+            onChange={(e) => updatePriority(task._id, e.target.value)}
+          >
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+
+          <p>
+            Due Date:{" "}
+            {task.dueDate
+              ? new Date(task.dueDate).toLocaleDateString()
+              : "No due date"}
+          </p>
         </div>
       ))}
     </div>
