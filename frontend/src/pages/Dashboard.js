@@ -1,7 +1,18 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import API from "../api/api";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 function Dashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -49,11 +60,17 @@ function Dashboard() {
     },
   };
 
-  const chartData = [
+  const taskStatusData = [
     { name: "Pending", value: stats.pendingTasks },
     { name: "In Progress", value: stats.inProgressTasks },
     { name: "Completed", value: stats.completedTasks },
   ];
+
+  const projectData = [
+  { name: "Pending", projects: stats.pendingProjects },
+  { name: "In Progress", projects: stats.inProgressProjects },
+  { name: "Completed", projects: stats.completedProjects },
+];
 
   const COLORS = ["#ff4d4f", "#faad14", "#52c41a"];
 
@@ -160,12 +177,28 @@ function Dashboard() {
           tasks.map((task) => (
             <div key={task._id} style={styles.taskCard}>
               <h3>{task.title}</h3>
+
               <p>
                 Status: <strong>{task.status}</strong>
               </p>
+
+              <p>
+                Priority: <strong>{task.priority || "Medium"}</strong>
+              </p>
+
+              <p>
+                Due Date:{" "}
+                <strong>
+                  {task.dueDate
+                    ? new Date(task.dueDate).toLocaleDateString()
+                    : "No due date"}
+                </strong>
+              </p>
+
               <p>
                 Project: <strong>{task.projectId?.name || "N/A"}</strong>
               </p>
+
               <p>
                 Assigned To:{" "}
                 <strong>{task.assignedTo?.name || "Unassigned"}</strong>
@@ -179,14 +212,14 @@ function Dashboard() {
 
       <PieChart width={300} height={300}>
         <Pie
-          data={chartData}
+          data={taskStatusData}
           cx="50%"
           cy="50%"
           outerRadius={100}
           dataKey="value"
           label
         >
-          {chartData.map((entry, index) => (
+          {taskStatusData.map((entry, index) => (
             <Cell key={index} fill={COLORS[index]} />
           ))}
         </Pie>
@@ -194,6 +227,17 @@ function Dashboard() {
         <Tooltip />
         <Legend />
       </PieChart>
+
+      <h3>Project Status Chart</h3>
+
+      <BarChart width={400} height={300} data={projectData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Bar dataKey="projects" fill="#8884d8" />
+      </BarChart>
 
       <div style={styles.card}>
         <h3>Profile</h3>

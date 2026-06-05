@@ -7,6 +7,8 @@ const { verifyJWT } = require("../middleware/verifyJWT");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const { createNotification } = require("../utils/createNotification");
 const { createLog } = require("../utils/createLog");
+const updateProjectStatus = require("../utils/updateProjectStatus");
+
 // CREATE TASK
 router.post(
   "/",
@@ -53,6 +55,8 @@ router.post(
         companyId: req.user.companyId,
       });
 
+      await updateProjectStatus(projectId);
+
       if (assignedTo) {
         await createNotification(
           assignedTo,
@@ -60,11 +64,12 @@ router.post(
           req.app.get("io")
         );
       }
+
       await createLog(
-      req.user._id,
-      req.user.companyId,
-      `Created task: ${task.title}`
-    );
+        req.user._id,
+        req.user.companyId,
+        `Created task: ${task.title}`
+      );
 
       res.status(201).json(task);
     } catch (err) {
@@ -156,6 +161,8 @@ router.put("/:id", verifyJWT, async (req, res) => {
       new: true,
     });
 
+    await updateProjectStatus(task.projectId);
+
     if (
       task.assignedTo &&
       req.body.status &&
@@ -167,6 +174,7 @@ router.put("/:id", verifyJWT, async (req, res) => {
         req.app.get("io")
       );
     }
+
     await createLog(
       req.user._id,
       req.user.companyId,
@@ -196,11 +204,14 @@ router.delete(
           error: "Task not found",
         });
       }
+
+      await updateProjectStatus(task.projectId);
+
       await createLog(
-      req.user._id,
-      req.user.companyId,
-      `Deleted task: ${task.title}`
-    );
+        req.user._id,
+        req.user.companyId,
+        `Deleted task: ${task.title}`
+      );
 
       res.json({ message: "Task deleted successfully" });
     } catch (err) {

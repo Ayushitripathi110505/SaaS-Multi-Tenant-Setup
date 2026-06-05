@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import API from "../api/api";
 
 function ProjectDetails() {
- 
   const { id } = useParams();
 
   const [project, setProject] = useState(null);
@@ -267,7 +266,7 @@ function ProjectDetails() {
             <option value="Completed">Completed</option>
           </select>
 
-          <p>Priority: {task.priority}</p>
+          <p>Priority: {task.priority || "Medium"}</p>
 
           <select
             value={task.priority || "Medium"}
@@ -286,7 +285,7 @@ function ProjectDetails() {
           </p>
 
           <hr />
-          <p style={{ color: "red" }}>TEST: Comments and Uploads section loaded</p>
+
           <h4>📎 Attachments</h4>
 
           <input

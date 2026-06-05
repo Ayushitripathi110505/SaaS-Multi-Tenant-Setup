@@ -14,16 +14,6 @@ router.get("/", verifyJWT, async (req, res) => {
     const totalProjects = await Project.countDocuments({ companyId });
     const totalTasks = await Task.countDocuments({ companyId });
 
-    const completedProjects = await Project.countDocuments({
-      companyId,
-      status: "Completed",
-    });
-
-    const inProgressProjects = await Project.countDocuments({
-      companyId,
-      status: "In Progress",
-    });
-
     const pendingTasks = await Task.countDocuments({
       companyId,
       status: "Pending",
@@ -39,13 +29,45 @@ router.get("/", verifyJWT, async (req, res) => {
       status: "Completed",
     });
 
+    const projects = await Project.find({ companyId });
+
+    let completedProjects = 0;
+    let inProgressProjects = 0;
+    let pendingProjects = 0;
+
+    for (const project of projects) {
+      const totalProjectTasks = await Task.countDocuments({
+        companyId,
+        projectId: project._id,
+      });
+
+      const completedProjectTasks = await Task.countDocuments({
+        companyId,
+        projectId: project._id,
+        status: "Completed",
+      });
+
+      if (totalProjectTasks === 0) {
+        pendingProjects++;
+      } else if (completedProjectTasks === totalProjectTasks) {
+        completedProjects++;
+      } else if (completedProjectTasks > 0) {
+        inProgressProjects++;
+      } else {
+        pendingProjects++;
+      }
+    }
+
     res.json({
       totalUsers,
       totalProjects,
       totalTasks,
+
       pendingTasks,
       inProgressTasks,
       completedTasks,
+
+      pendingProjects,
       completedProjects,
       inProgressProjects,
     });

@@ -2,27 +2,31 @@ const express = require("express");
 const router = express.Router();
 
 const Project = require("../models/Project");
+const Task = require("../models/Task");
 const { verifyJWT } = require("../middleware/verifyJWT");
 const roleMiddleware = require("../middleware/roleMiddleware");
-const Task = require("../models/Task");
 
+// CREATE PROJECT
 router.post(
   "/",
   verifyJWT,
   roleMiddleware(["Admin", "Manager"]),
   async (req, res) => {
     try {
-      const { name, description, assignedTo, status } = req.body;
+      const { name, description, assignedTo } = req.body;
 
       if (!name) {
-        return res.status(400).json({ error: "Project name is required" });
+        return res.status(400).json({
+          error: "Project name is required",
+        });
       }
 
       const project = await Project.create({
         name,
         description,
         assignedTo: assignedTo || null,
-        status: status || "In Progress",
+        status: "Pending",
+        progress: 0,
         createdBy: req.user._id,
         companyId: req.user.companyId,
       });
@@ -34,6 +38,7 @@ router.post(
   }
 );
 
+// GET ALL PROJECTS WITH AUTO STATUS + PROGRESS
 router.get("/", verifyJWT, async (req, res) => {
   try {
     const projects = await Project.find({
@@ -56,13 +61,33 @@ router.get("/", verifyJWT, async (req, res) => {
         });
 
         const progress =
-          totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+          totalTasks > 0
+            ? Math.round((completedTasks / totalTasks) * 100)
+            : 0;
+
+        let status = "Pending";
+
+        if (totalTasks === 0) {
+          status = "Pending";
+        } else if (completedTasks === totalTasks) {
+          status = "Completed";
+        } else if (completedTasks > 0) {
+          status = "In Progress";
+        } else {
+          status = "Pending";
+        }
+
+        await Project.findByIdAndUpdate(project._id, {
+          status,
+          progress,
+        });
 
         return {
           ...project._doc,
           totalTasks,
           completedTasks,
           progress,
+          status,
         };
       })
     );
@@ -73,6 +98,7 @@ router.get("/", verifyJWT, async (req, res) => {
   }
 });
 
+// GET SINGLE PROJECT WITH AUTO STATUS + PROGRESS
 router.get("/:id", verifyJWT, async (req, res) => {
   try {
     const project = await Project.findOne({
@@ -83,32 +109,82 @@ router.get("/:id", verifyJWT, async (req, res) => {
       .populate("createdBy", "name email");
 
     if (!project) {
-      return res.status(404).json({ error: "Project not found" });
+      return res.status(404).json({
+        error: "Project not found",
+      });
     }
 
-    res.json(project);
+    const totalTasks = await Task.countDocuments({
+      projectId: project._id,
+      companyId: req.user.companyId,
+    });
+
+    const completedTasks = await Task.countDocuments({
+      projectId: project._id,
+      companyId: req.user.companyId,
+      status: "Completed",
+    });
+
+    const progress =
+      totalTasks > 0
+        ? Math.round((completedTasks / totalTasks) * 100)
+        : 0;
+
+    let status = "Pending";
+
+    if (totalTasks === 0) {
+      status = "Pending";
+    } else if (completedTasks === totalTasks) {
+      status = "Completed";
+    } else if (completedTasks > 0) {
+      status = "In Progress";
+    } else {
+      status = "Pending";
+    }
+
+    await Project.findByIdAndUpdate(project._id, {
+      status,
+      progress,
+    });
+
+    res.json({
+      ...project._doc,
+      totalTasks,
+      completedTasks,
+      progress,
+      status,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// UPDATE PROJECT
 router.put(
   "/:id",
   verifyJWT,
   roleMiddleware(["Admin", "Manager"]),
   async (req, res) => {
     try {
+      const { name, description, assignedTo } = req.body;
+
       const project = await Project.findOneAndUpdate(
         {
           _id: req.params.id,
           companyId: req.user.companyId,
         },
-        req.body,
+        {
+          ...(name !== undefined && { name }),
+          ...(description !== undefined && { description }),
+          ...(assignedTo !== undefined && { assignedTo }),
+        },
         { new: true }
       );
 
       if (!project) {
-        return res.status(404).json({ error: "Project not found" });
+        return res.status(404).json({
+          error: "Project not found",
+        });
       }
 
       res.json(project);
@@ -118,6 +194,7 @@ router.put(
   }
 );
 
+// DELETE PROJECT
 router.delete(
   "/:id",
   verifyJWT,
@@ -130,10 +207,19 @@ router.delete(
       });
 
       if (!project) {
-        return res.status(404).json({ error: "Project not found" });
+        return res.status(404).json({
+          error: "Project not found",
+        });
       }
 
-      res.json({ message: "Project deleted successfully" });
+      await Task.deleteMany({
+        projectId: project._id,
+        companyId: req.user.companyId,
+      });
+
+      res.json({
+        message: "Project and related tasks deleted successfully",
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
