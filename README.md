@@ -162,20 +162,6 @@ Implemented 20+ REST APIs including:
 - Analytics
 - Activity Logs
 - File Uploads
-
----
-
-## 📸 Screenshots
-
-Add screenshots of:
-
-- Login Page
-- Dashboard
-- Project Management
-- Task Board
-- Analytics
-- User Management
-
 ---
 
 ## 🌟 Key Highlights
